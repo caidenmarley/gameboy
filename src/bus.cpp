@@ -1,0 +1,79 @@
+#include "bus.h"
+#include <stdexcept>
+#include <algorithm>
+
+Bus::Bus(Cartridge& cart) : cart(cart){
+    // clear all ram regions
+    std::fill(std::begin(vram), std::end(vram), 0);
+    std::fill(std::begin(wram), std::end(wram), 0);
+    std::fill(std::begin(oam), std::end(oam), 0xFF);  // 0xFF hides all sprites until you explicitly load them
+    std::fill(std::begin(hram), std::end(hram), 0);
+    std::fill(std::begin(ioRegs), std::end(ioRegs), 0);
+}
+
+uint8_t Bus::read(uint16_t address){
+    if(address < 0x8000){
+        // Cartridge ROM
+        return cart.readByte(address);
+    }else if(address < 0xA000){
+        // VRAM
+        return vram[address - 0x8000];
+    }else if(address < 0xC000){
+        // Cartridge RAM
+        return cart.readByte(address);
+    }else if(address < 0xE000){
+        // WRAM
+        return wram[address - 0xC000];
+    }else if(address < 0xFE00){
+        // WRAM, echo of first one
+        return wram[address - 0xE000];
+    }else if(address < 0xFEA0){
+        // OAM
+        return oam[address - 0xFE00];
+    }else if(address < 0xFF00){
+        // unused
+        return 0xFF;
+    }else if(address < 0xFF80){
+        // IO regs
+        return ioRegs[address - 0xFF00];
+    }else if(address < 0xFFFF){
+        // HRAM
+        return hram[address - 0xFF80];
+    }else{
+        // FFFF - interrupt enable reg
+        return ieReg;
+    }
+}
+
+void Bus::write(uint16_t address, uint8_t byte){
+    if(address < 0x8000){
+        // Cartridge ROM
+        cart.writeByte(address, byte);
+    }else if(address < 0xA000){
+        // VRAM
+        vram[address - 0x8000] = byte;
+    }else if(address < 0xC000){
+        // Cartridge RAM
+        cart.writeByte(address, byte);
+    }else if(address < 0xE000){
+        // WRAM
+        wram[address - 0xC000] = byte;
+    }else if(address < 0xFE00){
+        // WRAM
+        wram[address - 0xE000] = byte;
+    }else if(address < 0xFEA0){
+        // OAM
+        oam[address - 0xFE00] = byte;
+    }else if(address < 0xFF00){
+        // unused
+    }else if(address < 0xFF80){
+        // IO regs
+        ioRegs[address - 0xFF00] = byte;
+    }else if(address < 0xFFFF){
+        // HRAM
+        hram[address - 0xFF80] = byte;
+    }else{
+        // FFFF - interrupt enable reg
+        ieReg = byte;
+    }
+}

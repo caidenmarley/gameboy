@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/gameboy.dir/main.cpp.o CMakeFiles/gameboy.dir/src/cartridge.cpp.o -o gameboy 
