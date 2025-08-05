@@ -73,4 +73,5 @@ public:
     }
 
     bool IME = false; // Interrupt Master Enable
+    bool halted = false;
 };

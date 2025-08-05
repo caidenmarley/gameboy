@@ -3,6 +3,7 @@
 #include <cstdint>
 #include "bus.h"
 #include "cpu.h"
+#include "instructions16.h"
 
 void addToA(uint8_t value, CPU& cpu){
     uint16_t result = cpu.A + value;
@@ -519,6 +520,7 @@ int decodeAndExecute(CPU& cpu, Bus& bus, uint8_t opcode){
                 cpu.A ^= 0xFF; 
                 cpu.setFlag(cpu.nF, true);
                 cpu.setFlag(cpu.hF, true);
+                return 1;
             }
             break;
         case 0x30: // JR NC, s8
@@ -989,7 +991,8 @@ int decodeAndExecute(CPU& cpu, Bus& bus, uint8_t opcode){
             break;
         case 0x76: // HALT
             {
-                // TODO HALT
+                cpu.halted = true;
+                return 1;
             }
             break;
         case 0x77: // LD (HL), A
@@ -1533,7 +1536,7 @@ int decodeAndExecute(CPU& cpu, Bus& bus, uint8_t opcode){
             break;
         case 0xCB:
             {
-                // TODO 16 bit opcodes
+                return decodeAndExecute16(cpu, bus);
             }
             break;
         case 0xCC: // CALL Z, a16
@@ -1859,5 +1862,7 @@ int decodeAndExecute(CPU& cpu, Bus& bus, uint8_t opcode){
                 return 4;
             }
             break;
+        default:
+            return 0;
     }
 }
