@@ -72,6 +72,27 @@ public:
         return (F & isolatingBit) != 0; // if flag bit is 0, expression == 0, so false, else true
     }
 
-    bool IME = false; // Interrupt Master Enable
     bool halted = false;
+    bool stopped = false;
+    
+    // Interupts
+    enum Interrupt : uint8_t {
+        VBLANK = 0,
+        LCD = 1,
+        TIMER = 2,
+        SERIAL = 3, 
+        JOYPAD = 4
+    };
+    
+    static constexpr uint16_t INTERRUPT_FLAG_ADDRESS = 0xFF0F;
+    static constexpr uint16_t INTERRUPT_ENABLE_ADDRESS = 0xFFFF;
+    
+    bool IME = false; // Interrupt Master Enable
+
+    /**
+     * Called by things like PPU, timer or joypad when an interupt should be signalled
+     * 
+     * @param interruptSource the thing requesting the interupt
+     */
+    void requestInterrupt(Interrupt interruptSource);
 };

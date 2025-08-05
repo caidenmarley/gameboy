@@ -226,7 +226,7 @@ int decodeAndExecute(CPU& cpu, Bus& bus, uint8_t opcode){
             break;
         case 0x10: // STOP
             {
-                //TODO
+                cpu.stopped = true;
                 return 1;
             }
             break;
