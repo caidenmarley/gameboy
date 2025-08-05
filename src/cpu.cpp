@@ -7,3 +7,7 @@ int CPU::step(){
     uint8_t opcode = bus.read(PC++);
     return decodeAndExecute(*this, bus, opcode);
 }
+
+void CPU::requestInterrupt(Interrupt interruptSource){
+    uint8_t flag = bus.read(INTERRUPT_FLAG_ADDRESS);
+}
