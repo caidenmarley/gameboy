@@ -71,4 +71,6 @@ public:
     bool getFlag(uint8_t isolatingBit) const{
         return (F & isolatingBit) != 0; // if flag bit is 0, expression == 0, so false, else true
     }
+
+    bool IME = false; // Interrupt Master Enable
 };
