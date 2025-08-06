@@ -1845,7 +1845,7 @@ int decodeAndExecute(CPU& cpu, Bus& bus, uint8_t opcode){
             break;
         case 0xFB: // EI
             {
-                cpu.IME = true;
+                cpu.imeEnabledNextStep = true;
                 return 1;
             }
             break;

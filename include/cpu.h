@@ -86,7 +86,9 @@ public:
     
     static constexpr uint16_t INTERRUPT_FLAG_ADDRESS = 0xFF0F;
     static constexpr uint16_t INTERRUPT_ENABLE_ADDRESS = 0xFFFF;
+    static constexpr uint16_t INTERRUPT_SOURCE_ADDRESS = 0x40;
     
+    bool imeEnabledNextStep = false;
     bool IME = false; // Interrupt Master Enable
 
     /**

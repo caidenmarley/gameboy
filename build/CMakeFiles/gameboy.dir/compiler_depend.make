@@ -404,7 +404,8 @@ CMakeFiles/gameboy.dir/src/cartridge.cpp.o: ../src/cartridge.cpp \
   /usr/include/c++/11/bits/fstream.tcc \
   /usr/include/c++/11/cstring \
   /usr/include/string.h \
-  /usr/include/strings.h
+  /usr/include/strings.h \
+  /usr/include/c++/11/iostream
 
 
 /usr/include/string.h:
