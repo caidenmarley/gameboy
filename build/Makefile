@@ -153,6 +153,30 @@ main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/gameboy.dir/build.make CMakeFiles/gameboy.dir/main.cpp.s
 .PHONY : main.cpp.s
 
+src/bus.o: src/bus.cpp.o
+.PHONY : src/bus.o
+
+# target to build an object file
+src/bus.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/gameboy.dir/build.make CMakeFiles/gameboy.dir/src/bus.cpp.o
+.PHONY : src/bus.cpp.o
+
+src/bus.i: src/bus.cpp.i
+.PHONY : src/bus.i
+
+# target to preprocess a source file
+src/bus.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/gameboy.dir/build.make CMakeFiles/gameboy.dir/src/bus.cpp.i
+.PHONY : src/bus.cpp.i
+
+src/bus.s: src/bus.cpp.s
+.PHONY : src/bus.s
+
+# target to generate assembly for a file
+src/bus.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/gameboy.dir/build.make CMakeFiles/gameboy.dir/src/bus.cpp.s
+.PHONY : src/bus.cpp.s
+
 src/cartridge.o: src/cartridge.cpp.o
 .PHONY : src/cartridge.o
 
@@ -177,6 +201,54 @@ src/cartridge.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/gameboy.dir/build.make CMakeFiles/gameboy.dir/src/cartridge.cpp.s
 .PHONY : src/cartridge.cpp.s
 
+src/cpu.o: src/cpu.cpp.o
+.PHONY : src/cpu.o
+
+# target to build an object file
+src/cpu.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/gameboy.dir/build.make CMakeFiles/gameboy.dir/src/cpu.cpp.o
+.PHONY : src/cpu.cpp.o
+
+src/cpu.i: src/cpu.cpp.i
+.PHONY : src/cpu.i
+
+# target to preprocess a source file
+src/cpu.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/gameboy.dir/build.make CMakeFiles/gameboy.dir/src/cpu.cpp.i
+.PHONY : src/cpu.cpp.i
+
+src/cpu.s: src/cpu.cpp.s
+.PHONY : src/cpu.s
+
+# target to generate assembly for a file
+src/cpu.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/gameboy.dir/build.make CMakeFiles/gameboy.dir/src/cpu.cpp.s
+.PHONY : src/cpu.cpp.s
+
+src/timer.o: src/timer.cpp.o
+.PHONY : src/timer.o
+
+# target to build an object file
+src/timer.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/gameboy.dir/build.make CMakeFiles/gameboy.dir/src/timer.cpp.o
+.PHONY : src/timer.cpp.o
+
+src/timer.i: src/timer.cpp.i
+.PHONY : src/timer.i
+
+# target to preprocess a source file
+src/timer.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/gameboy.dir/build.make CMakeFiles/gameboy.dir/src/timer.cpp.i
+.PHONY : src/timer.cpp.i
+
+src/timer.s: src/timer.cpp.s
+.PHONY : src/timer.s
+
+# target to generate assembly for a file
+src/timer.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/gameboy.dir/build.make CMakeFiles/gameboy.dir/src/timer.cpp.s
+.PHONY : src/timer.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -189,9 +261,18 @@ help:
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
+	@echo "... src/bus.o"
+	@echo "... src/bus.i"
+	@echo "... src/bus.s"
 	@echo "... src/cartridge.o"
 	@echo "... src/cartridge.i"
 	@echo "... src/cartridge.s"
+	@echo "... src/cpu.o"
+	@echo "... src/cpu.i"
+	@echo "... src/cpu.s"
+	@echo "... src/timer.o"
+	@echo "... src/timer.i"
+	@echo "... src/timer.s"
 .PHONY : help
 
 

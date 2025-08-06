@@ -1,7 +1,7 @@
-CMakeFiles/gameboy.dir/main.cpp.o: /home/caidenmarley/gameboy/main.cpp \
- /usr/include/stdc-predef.h \
- /home/caidenmarley/gameboy/include/cartridge.h \
- /usr/include/c++/11/cstdint \
+CMakeFiles/gameboy.dir/src/cpu.cpp.o: \
+ /home/caidenmarley/gameboy/src/cpu.cpp /usr/include/stdc-predef.h \
+ /home/caidenmarley/gameboy/include/cpu.h \
+ /home/caidenmarley/gameboy/include/bus.h /usr/include/c++/11/cstdint \
  /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/11/bits/os_defines.h \
  /usr/include/features.h /usr/include/features-time64.h \
@@ -21,6 +21,7 @@ CMakeFiles/gameboy.dir/main.cpp.o: /home/caidenmarley/gameboy/main.cpp \
  /usr/include/x86_64-linux-gnu/bits/wchar.h \
  /usr/include/x86_64-linux-gnu/bits/stdint-intn.h \
  /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
+ /home/caidenmarley/gameboy/include/cartridge.h \
  /usr/include/c++/11/string /usr/include/c++/11/bits/stringfwd.h \
  /usr/include/c++/11/bits/memoryfwd.h \
  /usr/include/c++/11/bits/char_traits.h \
@@ -141,27 +142,6 @@ CMakeFiles/gameboy.dir/main.cpp.o: /home/caidenmarley/gameboy/main.cpp \
  /usr/include/c++/11/bits/stl_vector.h \
  /usr/include/c++/11/bits/stl_bvector.h \
  /usr/include/c++/11/bits/vector.tcc \
- /home/caidenmarley/gameboy/include/cpu.h \
- /home/caidenmarley/gameboy/include/bus.h \
- /home/caidenmarley/gameboy/include/timer.h /usr/include/c++/11/iostream \
- /usr/include/c++/11/ostream /usr/include/c++/11/ios \
- /usr/include/c++/11/exception /usr/include/c++/11/bits/exception_ptr.h \
- /usr/include/c++/11/bits/cxxabi_init_exception.h \
- /usr/include/c++/11/typeinfo /usr/include/c++/11/bits/nested_exception.h \
- /usr/include/c++/11/bits/ios_base.h \
- /usr/include/c++/11/bits/locale_classes.h \
- /usr/include/c++/11/bits/locale_classes.tcc \
- /usr/include/c++/11/system_error \
- /usr/include/x86_64-linux-gnu/c++/11/bits/error_constants.h \
- /usr/include/c++/11/stdexcept /usr/include/c++/11/streambuf \
- /usr/include/c++/11/bits/streambuf.tcc \
- /usr/include/c++/11/bits/basic_ios.h \
- /usr/include/c++/11/bits/locale_facets.h /usr/include/c++/11/cwctype \
- /usr/include/wctype.h /usr/include/x86_64-linux-gnu/bits/wctype-wchar.h \
- /usr/include/x86_64-linux-gnu/c++/11/bits/ctype_base.h \
- /usr/include/c++/11/bits/streambuf_iterator.h \
- /usr/include/x86_64-linux-gnu/c++/11/bits/ctype_inline.h \
- /usr/include/c++/11/bits/locale_facets.tcc \
- /usr/include/c++/11/bits/basic_ios.tcc \
- /usr/include/c++/11/bits/ostream.tcc /usr/include/c++/11/istream \
- /usr/include/c++/11/bits/istream.tcc
+ /home/caidenmarley/gameboy/include/timer.h \
+ /home/caidenmarley/gameboy/include/instructions.h \
+ /home/caidenmarley/gameboy/include/instructions16.h

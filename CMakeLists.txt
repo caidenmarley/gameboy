@@ -16,6 +16,7 @@ include_directories(include)
 
 file(GLOB_RECURSE SRC_FILES
     src/*.cpp
+    
 )
 
 # create main exe, cmake --build build --target stock_bot

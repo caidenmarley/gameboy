@@ -33,6 +33,10 @@ uint8_t Bus::read(uint16_t address){
     }else if(address < 0xFF00){
         // unused
         return 0xFF;
+    }else if(address < 0xFF04){
+        return ioRegs[address - 0xFF00];
+    }else if(address < 0xFF08){
+        return timer.read(address);
     }else if(address < 0xFF80){
         // IO regs
         return ioRegs[address - 0xFF00];
@@ -66,8 +70,14 @@ void Bus::write(uint16_t address, uint8_t byte){
         oam[address - 0xFE00] = byte;
     }else if(address < 0xFF00){
         // unused
+    }else if(address < 0xFF04){
+        // IO regs, before timer
+        ioRegs[address - 0xFF00] = byte;
+    }else if(address < 0xFF08){
+        // Timer regs
+        timer.write(address, byte);
     }else if(address < 0xFF80){
-        // IO regs
+        // IO regs, after timer
         ioRegs[address - 0xFF00] = byte;
     }else if(address < 0xFFFF){
         // HRAM
@@ -76,4 +86,9 @@ void Bus::write(uint16_t address, uint8_t byte){
         // FFFF - interrupt enable reg
         ieReg = byte;
     }
+}
+
+void Bus::step(int tStates, CPU& cpu){
+    timer.step(tStates, cpu);
+    // TODO ppu, etc
 }

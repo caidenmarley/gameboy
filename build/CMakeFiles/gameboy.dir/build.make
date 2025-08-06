@@ -83,10 +83,24 @@ CMakeFiles/gameboy.dir/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/gameboy.dir/main.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/caidenmarley/gameboy/main.cpp -o CMakeFiles/gameboy.dir/main.cpp.s
 
+CMakeFiles/gameboy.dir/src/bus.cpp.o: CMakeFiles/gameboy.dir/flags.make
+CMakeFiles/gameboy.dir/src/bus.cpp.o: ../src/bus.cpp
+CMakeFiles/gameboy.dir/src/bus.cpp.o: CMakeFiles/gameboy.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/caidenmarley/gameboy/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/gameboy.dir/src/bus.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/gameboy.dir/src/bus.cpp.o -MF CMakeFiles/gameboy.dir/src/bus.cpp.o.d -o CMakeFiles/gameboy.dir/src/bus.cpp.o -c /home/caidenmarley/gameboy/src/bus.cpp
+
+CMakeFiles/gameboy.dir/src/bus.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/gameboy.dir/src/bus.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/caidenmarley/gameboy/src/bus.cpp > CMakeFiles/gameboy.dir/src/bus.cpp.i
+
+CMakeFiles/gameboy.dir/src/bus.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/gameboy.dir/src/bus.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/caidenmarley/gameboy/src/bus.cpp -o CMakeFiles/gameboy.dir/src/bus.cpp.s
+
 CMakeFiles/gameboy.dir/src/cartridge.cpp.o: CMakeFiles/gameboy.dir/flags.make
 CMakeFiles/gameboy.dir/src/cartridge.cpp.o: ../src/cartridge.cpp
 CMakeFiles/gameboy.dir/src/cartridge.cpp.o: CMakeFiles/gameboy.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/caidenmarley/gameboy/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/gameboy.dir/src/cartridge.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/caidenmarley/gameboy/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/gameboy.dir/src/cartridge.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/gameboy.dir/src/cartridge.cpp.o -MF CMakeFiles/gameboy.dir/src/cartridge.cpp.o.d -o CMakeFiles/gameboy.dir/src/cartridge.cpp.o -c /home/caidenmarley/gameboy/src/cartridge.cpp
 
 CMakeFiles/gameboy.dir/src/cartridge.cpp.i: cmake_force
@@ -97,19 +111,53 @@ CMakeFiles/gameboy.dir/src/cartridge.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/gameboy.dir/src/cartridge.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/caidenmarley/gameboy/src/cartridge.cpp -o CMakeFiles/gameboy.dir/src/cartridge.cpp.s
 
+CMakeFiles/gameboy.dir/src/cpu.cpp.o: CMakeFiles/gameboy.dir/flags.make
+CMakeFiles/gameboy.dir/src/cpu.cpp.o: ../src/cpu.cpp
+CMakeFiles/gameboy.dir/src/cpu.cpp.o: CMakeFiles/gameboy.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/caidenmarley/gameboy/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/gameboy.dir/src/cpu.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/gameboy.dir/src/cpu.cpp.o -MF CMakeFiles/gameboy.dir/src/cpu.cpp.o.d -o CMakeFiles/gameboy.dir/src/cpu.cpp.o -c /home/caidenmarley/gameboy/src/cpu.cpp
+
+CMakeFiles/gameboy.dir/src/cpu.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/gameboy.dir/src/cpu.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/caidenmarley/gameboy/src/cpu.cpp > CMakeFiles/gameboy.dir/src/cpu.cpp.i
+
+CMakeFiles/gameboy.dir/src/cpu.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/gameboy.dir/src/cpu.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/caidenmarley/gameboy/src/cpu.cpp -o CMakeFiles/gameboy.dir/src/cpu.cpp.s
+
+CMakeFiles/gameboy.dir/src/timer.cpp.o: CMakeFiles/gameboy.dir/flags.make
+CMakeFiles/gameboy.dir/src/timer.cpp.o: ../src/timer.cpp
+CMakeFiles/gameboy.dir/src/timer.cpp.o: CMakeFiles/gameboy.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/caidenmarley/gameboy/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/gameboy.dir/src/timer.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/gameboy.dir/src/timer.cpp.o -MF CMakeFiles/gameboy.dir/src/timer.cpp.o.d -o CMakeFiles/gameboy.dir/src/timer.cpp.o -c /home/caidenmarley/gameboy/src/timer.cpp
+
+CMakeFiles/gameboy.dir/src/timer.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/gameboy.dir/src/timer.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/caidenmarley/gameboy/src/timer.cpp > CMakeFiles/gameboy.dir/src/timer.cpp.i
+
+CMakeFiles/gameboy.dir/src/timer.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/gameboy.dir/src/timer.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/caidenmarley/gameboy/src/timer.cpp -o CMakeFiles/gameboy.dir/src/timer.cpp.s
+
 # Object files for target gameboy
 gameboy_OBJECTS = \
 "CMakeFiles/gameboy.dir/main.cpp.o" \
-"CMakeFiles/gameboy.dir/src/cartridge.cpp.o"
+"CMakeFiles/gameboy.dir/src/bus.cpp.o" \
+"CMakeFiles/gameboy.dir/src/cartridge.cpp.o" \
+"CMakeFiles/gameboy.dir/src/cpu.cpp.o" \
+"CMakeFiles/gameboy.dir/src/timer.cpp.o"
 
 # External object files for target gameboy
 gameboy_EXTERNAL_OBJECTS =
 
 gameboy: CMakeFiles/gameboy.dir/main.cpp.o
+gameboy: CMakeFiles/gameboy.dir/src/bus.cpp.o
 gameboy: CMakeFiles/gameboy.dir/src/cartridge.cpp.o
+gameboy: CMakeFiles/gameboy.dir/src/cpu.cpp.o
+gameboy: CMakeFiles/gameboy.dir/src/timer.cpp.o
 gameboy: CMakeFiles/gameboy.dir/build.make
 gameboy: CMakeFiles/gameboy.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/caidenmarley/gameboy/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Linking CXX executable gameboy"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/caidenmarley/gameboy/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Linking CXX executable gameboy"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/gameboy.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

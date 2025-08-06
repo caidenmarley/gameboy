@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include "cartridge.h"
+#include "timer.h"
 
 class Bus{
 public:
@@ -9,8 +10,16 @@ public:
 
     uint8_t read(uint16_t address);
     void write(uint16_t address, uint8_t byte);
+    /**
+     * advances all peripherals by tStates
+     * 
+     * @param tStates number of t states = 4xM-cycles
+     * @param cpu reference to cpu
+     */
+    void step(int tStates, CPU& cpu);
 private:
     Cartridge& cart;
+    Timer timer;
 
     // 8 KiB video ram
     uint8_t vram[0x2000];
