@@ -73,5 +73,6 @@ private:
     uint8_t currentRamBank;
     bool ramEnabled;
     uint8_t bankingMode;   // 0 ROM banking, 1 RAM banking
+    bool isMbc1;
     bool isMbc2;
 };

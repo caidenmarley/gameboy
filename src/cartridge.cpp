@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <iostream> 
 
-Cartridge::Cartridge() : currentRomBank(1), currentRamBank(0), ramEnabled(false), bankingMode(0), isMbc2(false){}
+Cartridge::Cartridge() : currentRomBank(1), currentRamBank(0), ramEnabled(false), bankingMode(0), isMbc1(false), isMbc2(false){}
 
 static const uint8_t expectedNintendoLogo[48] = {
     0xCE, 0xED, 0x66, 0x66, 0xCC, 0x0D, 0x00, 0x0B,
@@ -80,7 +80,10 @@ bool Cartridge::loadRom(const std::string& romPath){
         return false;
     }
 
-    this->isMbc2 = (this->header.cartType == 0x05 || this->header.cartType == 0x06);
+    uint8_t type = header.cartType;
+    this->isMbc1 = (type == 0x01 || type == 0x02 || type == 0x03);
+    this->isMbc2 = (type == 0x05 || type == 0x06);
+
     if(isMbc2){
         this->ramData.resize(0x200);
     }else{
@@ -128,26 +131,40 @@ uint8_t Cartridge::readByte(uint16_t address){
         }
         return 0xFF;
     }
-    // Mbc1
-    if(address < 0x4000){
-        return this->romData[address];
-    }else if(address < 0x8000){
-        size_t index = this->currentRomBank * 0x4000 + (address - 0x4000);
-        if(index >= romData.size()){
-            throw std::runtime_error("reading data out of rom range");
+
+    if(isMbc1){
+        // Mbc1
+        if(address < 0x4000){
+            return this->romData[address];
+        }else if(address < 0x8000){
+            size_t index = this->currentRomBank * 0x4000 + (address - 0x4000);
+            if(index >= romData.size()){
+                throw std::runtime_error("reading data out of rom range");
+            }else{
+                return this->romData[index];
+            }
+        }else if(address >= 0xA000 && address < 0xC000 && ramEnabled){
+            size_t index = this->currentRamBank * 0x2000 + (address - 0xA000);
+            if(index >= ramData.size()){
+                throw std::runtime_error("reading data out of ram range");
+            }else{
+                return this->ramData[index];
+            }
         }else{
-            return this->romData[index];
+            return 0xFF;
         }
-    }else if(address >= 0xA000 && address < 0xC000 && ramEnabled){
-        size_t index = this->currentRamBank * 0x2000 + (address - 0xA000);
-        if(index >= ramData.size()){
-            throw std::runtime_error("reading data out of ram range");
-        }else{
-            return this->ramData[index];
-        }
+    }
+
+    // No banking type 0x00
+    if(address < 0x8000){
+        return romData.at(address);
+    }else if(address >= 0xA000 && address < 0xC000){
+        size_t index = address - 0xA000;
+        return (index < ramData.size() && ramEnabled) ? ramData.at(index) : 0xFF;
     }else{
         return 0xFF;
     }
+
 }
 
 bool Cartridge::writeByte(uint16_t address, uint8_t byte){
@@ -170,41 +187,52 @@ bool Cartridge::writeByte(uint16_t address, uint8_t byte){
         return false;
     }
 
-    // Mbc1
-    if(address < 0x2000){
-        // RAM enable register, sending command to set or clear ramEnabled state
-        this->ramEnabled = ((byte & 0x0f) == 0x0A);   // any value with $A in the lower 4 bits enables the ram
-        return true;
-    }else if(address < 0x4000){
-        // ROM bank number, selects rom bank number for the 4000-7FFF region, higher bits are discarded leaving 5 lowest bits
-        uint8_t newBank = byte & 0x1F; // 0x1F=00011111
-        if(newBank == 0){
-            newBank = 1;    // if reg set to 0, it behaves as if it is set to $01
+    if(isMbc1){
+        // Mbc1
+        if(address < 0x2000){
+            // RAM enable register, sending command to set or clear ramEnabled state
+            this->ramEnabled = ((byte & 0x0F) == 0x0A);   // any value with $A in the lower 4 bits enables the ram
+            return true;
+        }else if(address < 0x4000){
+            // ROM bank number, selects rom bank number for the 4000-7FFF region, higher bits are discarded leaving 5 lowest bits
+            uint8_t newBank = byte & 0x1F; // 0x1F=00011111
+            if(newBank == 0){
+                newBank = 1;    // if reg set to 0, it behaves as if it is set to $01
+            }
+            // preserve any bits in 7,6,5 (0xE0=11100000) then or brings in the lower 5 bits
+            this->currentRomBank = (this->currentRomBank & 0xE0) | newBank;
+            return true;
+        }else if(address < 0x6000){
+            // RAM bank number, 2 bit reg controlled by banking mode
+            uint8_t twoBits = byte & 0x03;
+            if(bankingMode == 0){
+                // on larger carts which need a >5 bit bank number this is used to supply an addition 2 bits for the effective number
+                this->currentRomBank = (this->currentRomBank & 0x1F) | (twoBits << 5);
+            }else{
+                this->currentRamBank = twoBits;
+            }
+            return true;
+        }else if(address < 0x8000){
+            this->bankingMode = byte & 0x01; // low bit determines banking mode
+            return true;
+        }else if(address >= 0xA000 && address < 0xC000 && ramEnabled){
+            size_t index = this->currentRamBank * 0x2000 + (address - 0xA000);
+            if(index >= ramData.size()){
+                throw std::runtime_error("writing data out of RAM range");
+            }
+            ramData[index] = byte;
+            return true;
         }
-        // preserve any bits in 7,6,5 (0xE0=11100000) then or brings in the lower 5 bits
-        this->currentRomBank = (this->currentRomBank & 0xE0) | newBank;
-        return true;
-    }else if(address < 0x6000){
-        // RAM bank number, 2 bit reg controlled by banking mode
-        uint8_t twoBits = byte & 0x03;
-        if(bankingMode == 0){
-            // on larger carts which need a >5 bit bank number this is used to supply an addition 2 bits for the effective number
-            this->currentRomBank = (this->currentRomBank & 0x1F) | (twoBits << 5);
-        }else{
-            this->currentRamBank = twoBits;
-        }
-        return true;
-    }else if(address < 0x8000){
-        this->bankingMode = byte & 0x01; // low bit determines banking mode
-        return true;
-    }else if(address >= 0xA000 && address < 0xC000 && ramEnabled){
-        size_t index = this->currentRamBank * 0x2000 + (address - 0xA000);
-        if(index >= ramData.size()){
-            throw std::runtime_error("writing data out of RAM range");
-        }
-        ramData[index] = byte;
-        return true;
+    
+        return false;
     }
 
-    return false;
+    // No banking
+    if(address >= 0xA000 && address < 0xC000 && ramEnabled){
+        ramData[address - 0xA000] = byte;
+        return true;
+    }else{
+        return false;
+    }
+
 }
