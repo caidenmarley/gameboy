@@ -95,6 +95,8 @@ private:
 
     int dotCounter = 0;
 
+    int computeObjPenalty();
+
     void renderScanline();
 
     struct Sprite{

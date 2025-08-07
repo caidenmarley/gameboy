@@ -1,7 +1,7 @@
 #include "timer.h"
 #include "cpu.h"
 
-Timer::Timer(){}
+Timer::Timer() : DIV(0xAB), TIMA(0x00), TMA(0x00), TAC(0xF8){}
 
 void Timer::step(int tStates, CPU& cpu){
     // div increments at 16384Hz, so 64 mcycles, 256 tstates

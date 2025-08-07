@@ -1,7 +1,10 @@
 #include "cpu.h"
 #include "instructions.h"
 
-CPU::CPU(Bus& bus) : bus(bus), A(0x01), F(0xB0), B(0), C(0x13), D(0), E(0xD8), H(0x01), L(0x4D), SP(0xFFFE), PC(0x0100){}
+CPU::CPU(Bus& bus) : bus(bus), A(0x01), F(0xB0), B(0), C(0x13), D(0), E(0xD8), H(0x01), L(0x4D), SP(0xFFFE), PC(0x0100){
+    bus.write(INTERRUPT_FLAG_ADDRESS, 0xE1);
+    bus.write(INTERRUPT_ENABLE_ADDRESS, 0x00);
+}
 
 int CPU::step(){
     if(imeEnabledNextStep){

@@ -1,10 +1,12 @@
 #include "ppu.h"
 #include "cpu.h"
+#include <cstring>
 
-int computeObjPenalty(){return 6;}; // TODO object penalty for mode 3
-
-PPU::PPU(Bus& bus) : bus(bus){
+PPU::PPU(Bus& bus) : bus(bus), LCDC(0x91), STAT(0x85), SCY(0x00), SCX(0x00),
+                     LY(0x00), LYC(0x00), BGP(0xFC), WY(0x00), WX(0x00){
     scanlineSprites.reserve(10);
+    std::memset(vram, 0, sizeof(vram));
+    std::memset(oam, 0, sizeof(oam));
 }
 
 void PPU::step(int tStates, CPU& cpu){
@@ -141,6 +143,10 @@ void PPU::write(uint16_t address, uint8_t byte){
         case WX_ADDRESS: WX = byte; break;
         default: break;
     }
+}
+
+int PPU::computeObjPenalty(){
+    int penalty = 0;
 }
 
 void PPU::renderScanline(){
