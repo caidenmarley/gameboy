@@ -10,6 +10,11 @@ Bus::Bus(Cartridge& cart) : cart(cart), timer(), ppu(*this){
 }
 
 uint8_t Bus::read(uint16_t address){
+    if(ppu.isOamDmaActive() && (address < 0xFF80 || address > 0xFFFE)){
+        // if OAM DMA is active cpu can only access HRAM
+        return 0xFF;
+    }
+
     if(address < 0x8000){
         // Cartridge ROM
         return cart.readByte(address);
@@ -53,6 +58,11 @@ uint8_t Bus::read(uint16_t address){
 }
 
 void Bus::write(uint16_t address, uint8_t byte){
+    if(ppu.isOamDmaActive() && (address < 0xFF80 || address > 0xFFFE)){
+        // if OAM DMA is active cpu can only access HRAM
+        return;
+    }
+
     if(address < 0x8000){
         // Cartridge ROM
         cart.writeByte(address, byte);

@@ -45,6 +45,10 @@ public:
     bool isFrameReady() const{
         return frameReady;
     }
+
+    bool isOamDmaActive() const{
+        return oamDmaActive;
+    }
 private:
     Bus& bus;
 
