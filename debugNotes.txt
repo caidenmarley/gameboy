@@ -1,0 +1,6 @@
+rm -r build 
+mkdir build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=Debug
+make
+(in build) gdb --args ./gameboy ../roms/mem_timing-2/rom_singles/01-read_timing.gb

@@ -18,10 +18,10 @@ public:
      * @param cpu reference to cpu
      */
     void step(int tStates, CPU& cpu);
+    PPU ppu;
 private:
     Cartridge& cart;
     Timer timer;
-    PPU ppu;
 
     // 8 KiB work ram
     uint8_t wram[0x2000];

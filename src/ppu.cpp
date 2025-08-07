@@ -14,6 +14,11 @@ PPU::PPU(Bus& bus) : bus(bus), LCDC(0x91), STAT(0x85), SCY(0x00), SCX(0x00),
 
 void PPU::step(int tStates, CPU& cpu){
     stepDma(tStates);
+
+    if(!(LCDC & 0x80)){
+        return;
+    }
+
     dotCounter += tStates;
 
     while(true){
@@ -235,7 +240,7 @@ int PPU::computeObjPenalty(){
     // sprites sorted from leftmost to rightmost with things with equal values sorted by index
     std::vector<S> sortedSprites;
 
-    for(int i =0; i < scanlineSprites.size(); ++i){
+    for(int i =0; i < static_cast<int>(scanlineSprites.size()); ++i){
         const Sprite& sprite = scanlineSprites[i];
         // gameboy stores sprite X postion in offset of +8 pixels
         sortedSprites.push_back({sprite.x - 8, i, &sprite});

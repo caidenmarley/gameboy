@@ -1,1 +1,1 @@
-/usr/bin/c++ CMakeFiles/gameboy.dir/main.cpp.o CMakeFiles/gameboy.dir/src/bus.cpp.o CMakeFiles/gameboy.dir/src/cartridge.cpp.o CMakeFiles/gameboy.dir/src/cpu.cpp.o CMakeFiles/gameboy.dir/src/timer.cpp.o -o gameboy 
+/usr/bin/c++ CMakeFiles/gameboy.dir/main.cpp.o CMakeFiles/gameboy.dir/src/bus.cpp.o CMakeFiles/gameboy.dir/src/cartridge.cpp.o CMakeFiles/gameboy.dir/src/cpu.cpp.o CMakeFiles/gameboy.dir/src/ppu.cpp.o CMakeFiles/gameboy.dir/src/timer.cpp.o -o gameboy 

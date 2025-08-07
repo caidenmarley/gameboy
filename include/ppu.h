@@ -49,6 +49,10 @@ public:
     bool isOamDmaActive() const{
         return oamDmaActive;
     }
+
+    void clearNewFrameFlag(){
+        frameReady = false;
+    }
 private:
     Bus& bus;
 

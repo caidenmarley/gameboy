@@ -143,5 +143,7 @@ CMakeFiles/gameboy.dir/src/cpu.cpp.o: \
  /usr/include/c++/11/bits/stl_bvector.h \
  /usr/include/c++/11/bits/vector.tcc \
  /home/caidenmarley/gameboy/include/timer.h \
+ /home/caidenmarley/gameboy/include/ppu.h /usr/include/c++/11/deque \
+ /usr/include/c++/11/bits/stl_deque.h /usr/include/c++/11/bits/deque.tcc \
  /home/caidenmarley/gameboy/include/instructions.h \
  /home/caidenmarley/gameboy/include/instructions16.h

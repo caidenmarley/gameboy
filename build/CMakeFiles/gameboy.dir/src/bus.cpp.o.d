@@ -141,8 +141,11 @@ CMakeFiles/gameboy.dir/src/bus.cpp.o: \
  /usr/include/c++/11/bits/stl_vector.h \
  /usr/include/c++/11/bits/stl_bvector.h \
  /usr/include/c++/11/bits/vector.tcc \
- /home/caidenmarley/gameboy/include/timer.h /usr/include/c++/11/stdexcept \
- /usr/include/c++/11/exception /usr/include/c++/11/bits/exception_ptr.h \
+ /home/caidenmarley/gameboy/include/timer.h \
+ /home/caidenmarley/gameboy/include/ppu.h /usr/include/c++/11/deque \
+ /usr/include/c++/11/bits/stl_deque.h /usr/include/c++/11/bits/deque.tcc \
+ /usr/include/c++/11/stdexcept /usr/include/c++/11/exception \
+ /usr/include/c++/11/bits/exception_ptr.h \
  /usr/include/c++/11/bits/cxxabi_init_exception.h \
  /usr/include/c++/11/typeinfo /usr/include/c++/11/bits/nested_exception.h \
  /usr/include/c++/11/algorithm /usr/include/c++/11/utility \

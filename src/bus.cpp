@@ -2,7 +2,7 @@
 #include <stdexcept>
 #include <algorithm>
 
-Bus::Bus(Cartridge& cart) : cart(cart), timer(), ppu(*this){
+Bus::Bus(Cartridge& cart) : ppu(*this), cart(cart), timer(){
     // clear all ram regions
     std::fill(std::begin(wram), std::end(wram), 0);
     std::fill(std::begin(hram), std::end(hram), 0);

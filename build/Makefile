@@ -225,6 +225,30 @@ src/cpu.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/gameboy.dir/build.make CMakeFiles/gameboy.dir/src/cpu.cpp.s
 .PHONY : src/cpu.cpp.s
 
+src/ppu.o: src/ppu.cpp.o
+.PHONY : src/ppu.o
+
+# target to build an object file
+src/ppu.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/gameboy.dir/build.make CMakeFiles/gameboy.dir/src/ppu.cpp.o
+.PHONY : src/ppu.cpp.o
+
+src/ppu.i: src/ppu.cpp.i
+.PHONY : src/ppu.i
+
+# target to preprocess a source file
+src/ppu.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/gameboy.dir/build.make CMakeFiles/gameboy.dir/src/ppu.cpp.i
+.PHONY : src/ppu.cpp.i
+
+src/ppu.s: src/ppu.cpp.s
+.PHONY : src/ppu.s
+
+# target to generate assembly for a file
+src/ppu.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/gameboy.dir/build.make CMakeFiles/gameboy.dir/src/ppu.cpp.s
+.PHONY : src/ppu.cpp.s
+
 src/timer.o: src/timer.cpp.o
 .PHONY : src/timer.o
 
@@ -270,6 +294,9 @@ help:
 	@echo "... src/cpu.o"
 	@echo "... src/cpu.i"
 	@echo "... src/cpu.s"
+	@echo "... src/ppu.o"
+	@echo "... src/ppu.i"
+	@echo "... src/ppu.s"
 	@echo "... src/timer.o"
 	@echo "... src/timer.i"
 	@echo "... src/timer.s"

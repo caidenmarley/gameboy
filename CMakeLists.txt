@@ -15,9 +15,17 @@ endif()
 include_directories(include)
 
 file(GLOB_RECURSE SRC_FILES
-    src/*.cpp
-    
+    src/*.cpp  
 )
 
 # create main exe, cmake --build build --target stock_bot
 add_executable(gameboy main.cpp ${SRC_FILES})
+
+# find_package(SDL2 REQUIRED)
+
+# target_link_libraries(gameboy
+#     PRIVATE
+#         SDL2::SDL2
+#         SDL2::SDL2main
+# )
+
