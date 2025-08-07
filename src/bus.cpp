@@ -2,11 +2,9 @@
 #include <stdexcept>
 #include <algorithm>
 
-Bus::Bus(Cartridge& cart) : cart(cart){
+Bus::Bus(Cartridge& cart) : cart(cart), timer(), ppu(*this){
     // clear all ram regions
-    std::fill(std::begin(vram), std::end(vram), 0);
     std::fill(std::begin(wram), std::end(wram), 0);
-    std::fill(std::begin(oam), std::end(oam), 0xFF);  // 0xFF hides all sprites until you explicitly load them
     std::fill(std::begin(hram), std::end(hram), 0);
     std::fill(std::begin(ioRegs), std::end(ioRegs), 0);
 }
@@ -17,7 +15,7 @@ uint8_t Bus::read(uint16_t address){
         return cart.readByte(address);
     }else if(address < 0xA000){
         // VRAM
-        return vram[address - 0x8000];
+        return ppu.read(address);
     }else if(address < 0xC000){
         // Cartridge RAM
         return cart.readByte(address);
@@ -29,14 +27,19 @@ uint8_t Bus::read(uint16_t address){
         return wram[address - 0xE000];
     }else if(address < 0xFEA0){
         // OAM
-        return oam[address - 0xFE00];
+        return ppu.read(address);
     }else if(address < 0xFF00){
         // unused
         return 0xFF;
     }else if(address < 0xFF04){
+        // IO regs
         return ioRegs[address - 0xFF00];
     }else if(address < 0xFF08){
+        // timer regs
         return timer.read(address);
+    }else if(address >= 0xFF40 && address <= 0xFF4B){
+        // LCDC, STAT, etc
+        return ppu.read(address);
     }else if(address < 0xFF80){
         // IO regs
         return ioRegs[address - 0xFF00];
@@ -55,7 +58,7 @@ void Bus::write(uint16_t address, uint8_t byte){
         cart.writeByte(address, byte);
     }else if(address < 0xA000){
         // VRAM
-        vram[address - 0x8000] = byte;
+        ppu.write(address, byte);
     }else if(address < 0xC000){
         // Cartridge RAM
         cart.writeByte(address, byte);
@@ -67,7 +70,7 @@ void Bus::write(uint16_t address, uint8_t byte){
         wram[address - 0xE000] = byte;
     }else if(address < 0xFEA0){
         // OAM
-        oam[address - 0xFE00] = byte;
+        ppu.write(address, byte);
     }else if(address < 0xFF00){
         // unused
     }else if(address < 0xFF04){
@@ -76,6 +79,9 @@ void Bus::write(uint16_t address, uint8_t byte){
     }else if(address < 0xFF08){
         // Timer regs
         timer.write(address, byte);
+    }else if(address >= 0xFF40 && address <= 0xFF4B){
+        // LCDC, STAT etc and DMA
+        ppu.write(address, byte);
     }else if(address < 0xFF80){
         // IO regs, after timer
         ioRegs[address - 0xFF00] = byte;
@@ -90,5 +96,6 @@ void Bus::write(uint16_t address, uint8_t byte){
 
 void Bus::step(int tStates, CPU& cpu){
     timer.step(tStates, cpu);
-    // TODO ppu, etc
+    ppu.step(tStates, cpu);
+    // TODO
 }

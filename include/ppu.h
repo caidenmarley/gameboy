@@ -42,11 +42,6 @@ public:
         return frameBuffer;
     }
 
-    /**
-     * Clear new frame flag
-     */
-    void clearNewFrameFlag();
-
     bool isFrameReady() const{
         return frameReady;
     }
@@ -135,6 +130,7 @@ private:
     //OAM DMA state
     bool oamDmaActive = false;
     int oamDmaCycles = 0;
+    uint16_t dmaSource = 0;
 
     // called each cpu step to advance DMA 
     void stepDma(int cycles){

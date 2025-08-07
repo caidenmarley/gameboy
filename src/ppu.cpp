@@ -167,6 +167,18 @@ uint8_t PPU::read(uint16_t address) const{
 }
 
 void PPU::write(uint16_t address, uint8_t byte){
+    // DMA
+    if(address == 0xFF46){
+        dmaSource = uint16_t(byte) << 8;
+        oamDmaActive = true;
+        oamDmaCycles = 160;
+
+        for(int i = 0; i < 0xA0; ++i){
+            oam[i] = bus.read(dmaSource + i);
+        }
+        return;
+    }
+
     // VRAM 8000-9FFF
     if(address >= 0x8000 && address <= 0x9FFF){
         if(vramAccessible()){
