@@ -1,6 +1,9 @@
 #include "ppu.h"
 #include "cpu.h"
 #include <cstring>
+#include <unordered_set> // just keys no values
+#include <vector>
+#include <algorithm> // stable_sort
 
 PPU::PPU(Bus& bus) : bus(bus), LCDC(0x91), STAT(0x85), SCY(0x00), SCX(0x00),
                      LY(0x00), LYC(0x00), BGP(0xFC), WY(0x00), WX(0x00){
@@ -10,6 +13,7 @@ PPU::PPU(Bus& bus) : bus(bus), LCDC(0x91), STAT(0x85), SCY(0x00), SCX(0x00),
 }
 
 void PPU::step(int tStates, CPU& cpu){
+    stepDma(tStates);
     dotCounter += tStates;
 
     while(true){
@@ -28,7 +32,7 @@ void PPU::step(int tStates, CPU& cpu){
             }
             break;
             case 0: {
-                int mode3length = 172 + (SCX % 8) + (((LCDC & 0x20) && LY >= WY) ? 6 : 0) + computeObjPenalty();
+                int mode3length = 172 + (SCX % 8) + (((LCDC & 0x20) && LY >= WY) ? 6 : 0) + lastMode3Penalty;
                 needed = 376 - mode3length;
             }
             break;
@@ -70,13 +74,58 @@ void PPU::step(int tStates, CPU& cpu){
                 STAT = (STAT & ~0x03) | 0;
                 if(STAT & (1 << 3)){
                     // if mode 0 interrupt is enabled bit 3, request it
-                    cpu.requestInterrupt(cpu.Interrupt::LCD);
+                    cpu.requestInterrupt(CPU::Interrupt::LCD);
                 }
             }
             break;
             case 0: {
+                // advance to next scanline
+                LY++;
 
+                // when LY = LYC bit 2 of STAT is set
+                if (LY == LYC){
+                    STAT |= (1 << 2);
+                    if(STAT & (1 << 6)){ // bit 6 STAT = LYC=LY interupt enable
+                        cpu.requestInterrupt(CPU::Interrupt::LCD);
+                    }
+                }else{
+                    STAT &= ~(1 << 2);
+                }
+
+                if(LY == 144){
+                    // enter vblank mode
+                    STAT = (STAT & ~0x03) | 1; // mode 1
+                    frameReady = true;
+                    cpu.requestInterrupt(CPU::Interrupt::VBLANK);
+
+                    // STAT mode 1 interupt if enabled
+                    if(STAT & (1 << 4)){    // STAT bit 4 mode 1 int enable
+                        cpu.requestInterrupt(CPU::Interrupt::LCD);
+                    }
+                }else if(LY > 153){
+                    // wrap back to line 0 after VBLANK lines
+                    LY = 0;
+                    STAT = (STAT & ~0x03) | 2; // Mode 2 for new frames first scanline
+                }else{
+                    // more visible lines mode 2
+                    STAT = (STAT & ~0x03) | 2;
+                    if(STAT & (1 << 5)){    // STAT bit 5 mode 2 interupt enable
+                        cpu.requestInterrupt(CPU::Interrupt::LCD);
+                    }
+                }
             }
+            break;
+            case 1: {
+                // after 10 scalines of Vblank wrap to first visible line
+                LY = 0;
+                STAT = (STAT & ~0x03) | 2;
+
+                // if mode 2 stat interupts are enabled request one
+                if(STAT & (1 << 5)){ // STAT bit 5 mode 2 interupt enable
+                    cpu.requestInterrupt(CPU::Interrupt::LCD);
+                }
+            }
+            break;
         }
     }
 }
@@ -84,12 +133,20 @@ void PPU::step(int tStates, CPU& cpu){
 uint8_t PPU::read(uint16_t address) const{
     // VRAM 8000-9FFF
     if(address >= 0x8000 && address <= 0x9FFF){
-        return vram[address - 0x8000];
+        if(vramAccessible()){
+            return vram[address - 0x8000];
+        }else{
+            return 0xFF;
+        }
     }
 
     // OAM FE00-FE9F
     if(address >= 0xFE00 && address <= 0xFE9F){
-        return oam[address - 0xFE00];
+        if(oamAccessible()){
+            return oam[address - 0xFE00];
+        }else{
+            return 0xFF;
+        }
     }
 
     // LCD control regs
@@ -130,7 +187,16 @@ void PPU::write(uint16_t address, uint8_t byte){
 
     // LCD control regs
     switch(address){
-        case LCDC_ADDRESS: LCDC = byte; break;
+        case LCDC_ADDRESS: {
+            bool wasOn = LCDC & 0x80;
+            LCDC = byte;
+            bool isOn = LCDC & 0x80;
+            if(wasOn && !isOn){
+                disableLCD();
+            }else if(!wasOn && isOn){
+                enableLCD();
+            }
+        } break;
         case STAT_ADDRESS: STAT = (STAT & 0x87) | (byte & 0x78); break; // only bit 3-6 are writable
         case SCY_ADDRESS: SCY = byte; break;
         case SCX_ADDRESS: SCX = byte; break;
@@ -147,6 +213,67 @@ void PPU::write(uint16_t address, uint8_t byte){
 
 int PPU::computeObjPenalty(){
     int penalty = 0;
+    std::unordered_set<uint16_t> seenTiles;
+
+    struct S{
+        int px, index;
+        const Sprite* s;
+    };
+
+    // sprites sorted from leftmost to rightmost with things with equal values sorted by index
+    std::vector<S> sortedSprites;
+
+    for(int i =0; i < scanlineSprites.size(); ++i){
+        const Sprite& sprite = scanlineSprites[i];
+        // gameboy stores sprite X postion in offset of +8 pixels
+        sortedSprites.push_back({sprite.x - 8, i, &sprite});
+    }
+
+    // stable sort preserves order of values that compare equal, so sorts on index if x is equal
+    std::stable_sort(sortedSprites.begin(), sortedSprites.end(), [](const S& a, const S& b){return a.px < b.px;});
+
+    for(S& val : sortedSprites){
+        const Sprite& sp = *val.s;
+        int px = sp.x - 8;
+
+        if(sp.x == 0){
+            // fixed penalty of 11 for completely leftside of the screen sprites
+            penalty += 11;
+            continue;
+        }
+        if (px < 0 || px >= 160){
+            // penalty only counts for sprites visible in the 0-159 X range ("OBJs overlapping the scanline are considered")
+            continue;
+        }   
+
+        // fixed 6 dot fetch tile penalty
+        penalty += 6;
+
+        // same logic as render fetcher
+        bool inWindow = (LCDC & 0x20) && (LY >= WY) && (px >= WX - 7);
+        uint16_t mapBase = (!inWindow && (LCDC & 0x08)) ? 0x9C00
+                         : (inWindow && (LCDC & 0x40)) ? 0x9C00 : 0x9800;
+
+        int tileCol = inWindow ? (px - (WX - 7)) / 8 : ((SCX + px) / 8) & 0x1F;
+        int tileRow = inWindow ? (LY - WY) / 8 : ((LY + SCY) & 0xFF) / 8;
+
+        uint16_t tileAddress = mapBase + tileRow * 32 + tileCol;
+
+        // If havent stalled for this tile add the penalty
+        if(!seenTiles.count(tileAddress)){
+            seenTiles.insert(tileAddress);
+            // gets pixels X inside its 8 pixel tile
+            int withinTileX = inWindow ? (px - (WX - 7)) % 8 : (SCX + px) % 8;
+
+            // 7 - withinTile X gets how many pixels are to the right, and then minus 2
+            int pen = (7 - withinTileX) - 2;
+            if(pen > 0){
+                penalty += pen;
+            }
+        }
+    }
+    lastMode3Penalty = penalty;
+    return penalty;
 }
 
 void PPU::renderScanline(){

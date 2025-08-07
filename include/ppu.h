@@ -63,8 +63,8 @@ private:
     uint8_t LY = 0; // LCD Y cooridnate (read only) FF44
     uint8_t LYC = 0; // LY compare FF45
     uint8_t BGP = 0; // BG palette data FF47 
-    uint8_t OBP0 = 0; // OBJ palette 0 data FF48
-    uint8_t OBP1 = 0; // OBJ palette 1 data FF49
+    uint8_t OBP0 = 0xFF; // OBJ palette 0 data FF48
+    uint8_t OBP1 = 0xFF; // OBJ palette 1 data FF49
     uint8_t WY = 0; // Window Y postition FF4A
     uint8_t WX = 0; // Window X position FF4B
 
@@ -82,10 +82,13 @@ private:
 
     inline uint8_t currentMode() const{ return (STAT & 0x03);}
     inline bool vramAccessible() const{ 
+        if(!(LCDC & 0x80)) return true; // if LCDC bit 7 is disable VRAM is always accessible
         uint8_t m = currentMode();
         return m != 3;
     }
     inline bool oamAccessible() const{
+        if(!(LCDC & 0x80)) return true; // if LCDC bit 7 is disable OAM is always accessible
+        if (oamDmaActive) return false;
         uint8_t m = currentMode();
         return m == 0 || m == 1;
     }
@@ -96,6 +99,7 @@ private:
     int dotCounter = 0;
 
     int computeObjPenalty();
+    int lastMode3Penalty;
 
     void renderScanline();
 
@@ -113,4 +117,31 @@ private:
 
     std::deque<uint8_t> backgroundFIFO; // background/window pixels
     std::deque<SpritePixel> spriteFIFO; // sprite pixels
+
+    // to clear when LCD turns off
+    void disableLCD(){
+        STAT = (STAT & ~ 0x03) | 0;
+        LY = 0;
+        dotCounter = 0;
+        backgroundFIFO.clear();
+        spriteFIFO.clear();
+        frameReady = false;
+    }
+
+    void enableLCD(){
+        STAT = (STAT & ~0x03) | 2; // mode 2 for new frame
+    }
+
+    //OAM DMA state
+    bool oamDmaActive = false;
+    int oamDmaCycles = 0;
+
+    // called each cpu step to advance DMA 
+    void stepDma(int cycles){
+        if(!oamDmaActive) return;
+        oamDmaCycles -= cycles;
+        if(oamDmaCycles <= 0){
+            oamDmaActive = false;
+        }
+    }
 };
