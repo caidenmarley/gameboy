@@ -53,6 +53,12 @@ public:
     void clearNewFrameFlag(){
         frameReady = false;
     }
+    uint8_t getSTAT() const{
+        return STAT;
+    }
+    uint8_t getLCDC() const{
+        return LCDC;
+    }
 private:
     Bus& bus;
 

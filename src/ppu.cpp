@@ -4,6 +4,7 @@
 #include <unordered_set> // just keys no values
 #include <vector>
 #include <algorithm> // stable_sort
+#include <iostream>
 
 PPU::PPU(Bus& bus) : bus(bus), LCDC(0x91), STAT(0x85), SCY(0x00), SCX(0x00),
                      LY(0x00), LYC(0x00), BGP(0xFC), WY(0x00), WX(0x00){
@@ -53,6 +54,7 @@ void PPU::step(int tStates, CPU& cpu){
 
         switch(mode){
             case 2: {
+                std::cout << "mode 2" << std::endl;
                 scanlineSprites.clear();
                 int spriteHeight = (LCDC & (1 << 2)) ? 16 : 8; // LCDC bit 2 determines sprite height
                 // objects vertical position on screen + 16 = byte 0 of 4 byte sprite chunk in oam
@@ -74,6 +76,7 @@ void PPU::step(int tStates, CPU& cpu){
             }
             break;
             case 3: {
+                std::cout << "mode 3" << std::endl;
                 renderScanline();
                 // switch to mode 0
                 STAT = (STAT & ~0x03) | 0;
@@ -84,6 +87,7 @@ void PPU::step(int tStates, CPU& cpu){
             }
             break;
             case 0: {
+                std::cout << "mode 0" << std::endl;
                 // advance to next scanline
                 LY++;
 
@@ -118,9 +122,10 @@ void PPU::step(int tStates, CPU& cpu){
                         cpu.requestInterrupt(CPU::Interrupt::LCD);
                     }
                 }
-            }
+            } 
             break;
             case 1: {
+                std::cout << "mode 1" << std::endl;
                 // after 10 scalines of Vblank wrap to first visible line
                 LY = 0;
                 STAT = (STAT & ~0x03) | 2;

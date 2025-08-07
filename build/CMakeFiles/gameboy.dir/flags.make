@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/home/caidenmarley/gameboy/include
+CXX_INCLUDES = -I/home/caidenmarley/gameboy/include -I/usr/include/imgui -I/usr/include/stb -isystem /usr/include/SDL2
 
-CXX_FLAGS = -Wall -Wextra -Wpedantic -Werror -std=c++20
+CXX_FLAGS = -g -Wall -Wextra -Wpedantic -Werror -std=c++20
 

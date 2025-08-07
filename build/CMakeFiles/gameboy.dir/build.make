@@ -172,6 +172,10 @@ gameboy: CMakeFiles/gameboy.dir/src/cpu.cpp.o
 gameboy: CMakeFiles/gameboy.dir/src/ppu.cpp.o
 gameboy: CMakeFiles/gameboy.dir/src/timer.cpp.o
 gameboy: CMakeFiles/gameboy.dir/build.make
+gameboy: /usr/lib/x86_64-linux-gnu/libSDL2.so
+gameboy: /usr/lib/x86_64-linux-gnu/libSDL2main.a
+gameboy: /usr/lib/x86_64-linux-gnu/libGLX.so
+gameboy: /usr/lib/x86_64-linux-gnu/libOpenGL.so
 gameboy: CMakeFiles/gameboy.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/caidenmarley/gameboy/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Linking CXX executable gameboy"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/gameboy.dir/link.txt --verbose=$(VERBOSE)

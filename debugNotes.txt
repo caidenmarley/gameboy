@@ -4,3 +4,5 @@ cd build
 cmake .. -DCMAKE_BUILD_TYPE=Debug
 make
 (in build) gdb --args ./gameboy ../roms/mem_timing-2/rom_singles/01-read_timing.gb
+
+./build/gameboy roms/pokemon-red.gb 2>&1 | grep "CPU"

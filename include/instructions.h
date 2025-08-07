@@ -4,6 +4,7 @@
 #include "bus.h"
 #include "cpu.h"
 #include "instructions16.h"
+#include <iostream>
 
 void addToA(uint8_t value, CPU& cpu){
     uint16_t result = cpu.A + value;
@@ -1698,6 +1699,14 @@ int decodeAndExecute(CPU& cpu, Bus& bus, uint8_t opcode){
         case 0xE0: // LD (a8), A
             {
                 uint8_t offset = bus.read(cpu.PC++);
+                if ((0xFF00u + offset) == 0xFF40 || (0xFF00u + offset) == 0xFF41) {
+                    std::cerr 
+                    << ">>> [CPU] E0 LDH write to " 
+                    << std::hex << std::showbase << (0xFF00u + offset) 
+                    << " = 0x" << std::hex << int(cpu.A)
+                    << " @ ROM_PC=0x" << std::hex << cpu.PC 
+                    << "\n";
+                }
                 bus.write(0xFF00 + offset, cpu.A);
                 return 3;
             }
@@ -1710,6 +1719,14 @@ int decodeAndExecute(CPU& cpu, Bus& bus, uint8_t opcode){
             break;
         case 0xE2: // LD (C), A
             {
+                if ((0xFF00u + cpu.C) == 0xFF40 || (0xFF00u + cpu.C) == 0xFF41) {
+                    std::cerr 
+                    << ">>> [CPU] E2 LDH write to " 
+                    << std::hex << std::showbase << (0xFF00u + cpu.C) 
+                    << " = 0x" << std::hex << int(cpu.A)
+                    << " @ ROM_PC=0x" << std::hex << cpu.PC 
+                    << "\n";
+                }
                 bus.write(0xFF00 + cpu.C, cpu.A);
                 return 2;
             }
