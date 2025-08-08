@@ -70,6 +70,12 @@ void orWithA(uint8_t value, CPU& cpu){
 
 void compareWithA(uint8_t value, CPU& cpu){
     uint16_t result = cpu.A - value;
+    if(cpu.A == 144){
+        std::cerr << "[COMPARE] A=" << int(cpu.A)
+                  << " value=" << int(value)
+                  << " result=" << int(result & 0xFF)
+                  << " → Z=" << ((result & 0xFF) == 0 ? 1 : 0) << "\n";
+    }
     cpu.setFlag(cpu.zF, (result & 0xFF)==0);
     cpu.setFlag(cpu.nF, true);
     cpu.setFlag(cpu.hF, (cpu.A & 0x0F) < (value & 0x0F));
@@ -1706,6 +1712,7 @@ int decodeAndExecute(CPU& cpu, Bus& bus, uint8_t opcode){
                     << " = 0x" << std::hex << int(cpu.A)
                     << " @ ROM_PC=0x" << std::hex << cpu.PC 
                     << "\n";
+                    std::cout << "cpu@a" << std::hex << int(cpu.A) << std::endl;
                 }
                 bus.write(0xFF00 + offset, cpu.A);
                 return 3;

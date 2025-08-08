@@ -115,14 +115,26 @@ int main(int argc, char* argv[]){
         ImGui_ImplSDL2_NewFrame(window);
         ImGui::NewFrame();
 
+        std::cout << "[CPU A] " << std::hex << int(cpu.A) << std::endl;
+        std::cerr << "LCDC=" << std::hex << int(bus.ppu.getLCDC())
+          << "  STAT=" << int(bus.ppu.getSTAT()) << "\n";
         // — Emulator: run until VBlank —
         while (!bus.ppu.isFrameReady()) {
-            std::cerr << "LCDC=" << std::hex << int(bus.ppu.getLCDC())
-              << "  STAT=" << int(bus.ppu.getSTAT()) << "\n";
             int m = cpu.step();
             bus.step(m * 4, cpu);
         }
         bus.ppu.clearNewFrameFlag();
+
+        static int frameCounter = 0;
+        std::cout << "frameCounter" << frameCounter << std::endl;
+        if (++frameCounter == 1000) {
+            std::cerr << "[HACK] Forcing LCDC to 0x91\n";
+            bus.write(0xFF40, 0x91);
+        }
+        if(frameCounter >= 1000){
+            std::cout << "[POST HACK] LCDC" << std::hex << int(bus.ppu.getLCDC()) << std::endl;
+        }
+
 
         // — Upload frame to GPU texture —
         // 1) Grab the 0–3 indices from the PPU:

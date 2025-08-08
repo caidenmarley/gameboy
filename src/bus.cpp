@@ -19,6 +19,10 @@ uint8_t Bus::read(uint16_t address){
         return 0xFF;
     }
 
+    if(address == 0xFF0F){
+        return interruptFlag;
+    }
+
     if(address < 0x8000){
         // Cartridge ROM
         return cart.readByte(address);
@@ -41,23 +45,17 @@ uint8_t Bus::read(uint16_t address){
         // unused
         return 0xFF;
     }else if(address == 0xFF00){
-        uint8_t res = joyp;
+        std::cout << "PAD" << std::endl;
+        uint8_t res = 0xFF;
 
-        // if bit 4 is clear then buttons row (A,B,Select,Start)
-        if(!(joyp & 0x10)){
-            for(int i = 0; i < 4; ++i){
-                if(key_state[i]){   // key_state[0]=A, 1=B, 2=Select, 3=Start
-                    res &= ~(1 << i);
-                }
-            }
-        }else if(!(joyp & 0x20)){ // if bit 5 clear, directions row (right, left, up, down)
-            for(int i = 0; i < 4; ++i){
-                if(key_state[i + 4]){ // key_state[4]=R, 5=L, 6=U, 7=D
-                    res &= ~(1 << i);
-                }
-            }
+        if (!(joyp & 0x10)) {
+            // action buttons selected → simulate Start (bit 3) is pressed
+            res &= ~(1 << 3); // Start = 0 = pressed
         }
 
+        // set upper bits to reflect joyp (bits 4 and 5)
+        res = (res & 0xCF) | (joyp & 0x30);
+        
         return res;
     }else if(address < 0xFF04){
         // IO regs
@@ -87,6 +85,11 @@ void Bus::write(uint16_t address, uint8_t byte){
     }
     if(ppu.isOamDmaActive() && (address < 0xFF80 || address > 0xFFFE)){
         // if OAM DMA is active cpu can only access HRAM
+        return;
+    }
+
+    if(address == 0xFF0F){
+        interruptFlag = byte;
         return;
     }
 

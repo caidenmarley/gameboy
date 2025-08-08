@@ -55,6 +55,13 @@ int CPU::step(){
     }
 
     uint8_t opcode = bus.read(PC++);
+    std::cerr << "[CPUSTATE] PC=0x" << std::hex << int(PC - 1)
+            << " OPCODE=0x" << std::hex << int(opcode)
+            << " A=" << int(A) << " B=" << int(B)
+            << " C=" << int(C) << " D=" << int(D)
+            << " E=" << int(E) << " H=" << int(H)
+            << " L=" << int(L) << " SP=" << int(SP)
+            << " IME=" << IME << "\n";
     return decodeAndExecute(*this, bus, opcode);
 }
 

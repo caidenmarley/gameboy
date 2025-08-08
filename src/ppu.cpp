@@ -5,6 +5,7 @@
 #include <vector>
 #include <algorithm> // stable_sort
 #include <iostream>
+#include <iomanip>
 
 PPU::PPU(Bus& bus) : bus(bus), LCDC(0x91), STAT(0x85), SCY(0x00), SCX(0x00),
                      LY(0x00), LYC(0x00), BGP(0xFC), WY(0x00), WX(0x00){
@@ -103,8 +104,10 @@ void PPU::step(int tStates, CPU& cpu){
 
                 if(LY == 144){
                     // enter vblank mode
+                    std::cout << "[PPU] vblank triggering" << std::endl;
                     STAT = (STAT & ~0x03) | 1; // mode 1
                     frameReady = true;
+                    
                     cpu.requestInterrupt(CPU::Interrupt::VBLANK);
 
                     // STAT mode 1 interupt if enabled
@@ -127,7 +130,7 @@ void PPU::step(int tStates, CPU& cpu){
             case 1: {
                 std::cout << "mode 1" << std::endl;
                 // after 10 scalines of Vblank wrap to first visible line
-                LY = 0;
+                //LY = 0;
                 STAT = (STAT & ~0x03) | 2;
 
                 // if mode 2 stat interupts are enabled request one
@@ -165,7 +168,7 @@ uint8_t PPU::read(uint16_t address) const{
         case STAT_ADDRESS: return STAT;
         case SCY_ADDRESS: return SCY;
         case SCX_ADDRESS: return SCX;
-        case LY_ADDRESS: return LY;
+        case LY_ADDRESS: std::cerr << "[PPU LY] LY READ = " << std::dec << int(LY) << "\n"; return LY;
         case LYC_ADDRESS: return LYC;
         case BGP_ADDRESS: return BGP;
         case OBP0_ADDRESS: return OBP0;
@@ -191,6 +194,8 @@ void PPU::write(uint16_t address, uint8_t byte){
 
     // VRAM 8000-9FFF
     if(address >= 0x8000 && address <= 0x9FFF){
+        std::cerr << "[VRAM] write 0x" << std::hex << address
+                  << " = 0x" << int(byte) << "\n";
         if(vramAccessible()){
             vram[address - 0x8000] = byte;
         }else{
@@ -206,16 +211,24 @@ void PPU::write(uint16_t address, uint8_t byte){
             return;
         }
     }
-
+    if(address == 0xFF40){
+        std::cout<<"temp" <<std::endl;
+    }
     // LCD control regs
     switch(address){
         case LCDC_ADDRESS: {
+            std::cout<<"LCDCHere"<<std::endl;
             bool wasOn = LCDC & 0x80;
             LCDC = byte;
+            std::cout << "BYTE VAL" << std::hex << int(byte) << std::endl;
             bool isOn = LCDC & 0x80;
+            std::cout<<"wasON" << std::boolalpha << wasOn << std::endl;
+            std::cout<<"isON" << std::boolalpha << isOn << std::endl;
             if(wasOn && !isOn){
+                std::cout<<"disable" << std::endl;
                 disableLCD();
             }else if(!wasOn && isOn){
+                std::cout << "enable" << std::endl;
                 enableLCD();
             }
         } break;
@@ -299,6 +312,12 @@ int PPU::computeObjPenalty(){
 }
 
 void PPU::renderScanline(){
+    if (LY >= 144) {
+        std::cerr << "[WARNING] renderScanline() called with LY >= 144 (" << int(LY) << "), skipping.\n";
+        return;
+    }
+    std::cerr << "[ERROR] renderScanline start, LY=" << int(LY) << "\n";
+
     backgroundFIFO.clear();
     spriteFIFO.clear();
     std::vector<SpritePixel> spriteLine;
@@ -306,7 +325,13 @@ void PPU::renderScanline(){
 
     int spriteHeight = (LCDC & (1<<2)) ? 16 : 8;
 
+    size_t i = 0;
     for(const Sprite& sprite : scanlineSprites){
+        if (i >= scanlineSprites.size()) {
+            std::cerr << "[ERROR] Sprite index " << i << " out of range\n";
+            std::exit(1);
+        }
+        i++;
         int oY = sprite.y;
         int oX = sprite.x;
         int tile = sprite.tileIndex;
@@ -328,6 +353,10 @@ void PPU::renderScanline(){
 
         // get rows 2 bytes from 0x8000
         uint16_t address = 0x8000 + tile*16 + row*2;
+        if (address >= 0xA000) {
+            std::cerr << "[ERROR] Sprite tile address out-of-bounds: 0x" << std::hex << address << "\n";
+            std::exit(1);
+        }
         uint8_t low = read(address);
         uint8_t high = read(address + 1);
 
@@ -386,7 +415,13 @@ void PPU::renderScanline(){
             tileRow = ((LY + SCY) & 0xFF) / 8;
         }
 
-        uint8_t tileIndex = read(mapBase + tileRow * 32 + tileCol); // tile map is 32 tiles wide
+        uint16_t tileMapAddress = mapBase + tileRow * 32 + tileCol;
+    
+        if(tileMapAddress >= 0xA000){
+            std::cerr << "[ERROR] Tile map read OOB: addr=0x" << std::hex << tileMapAddress << "\n";
+            std::exit(1);
+        }
+        uint8_t tileIndex = read(tileMapAddress); // tile map is 32 tiles wide
 
         // fetcherY is the row within the tilemap
         int fetcherY = inWindow
@@ -405,6 +440,10 @@ void PPU::renderScanline(){
             index = int8_t(tileIndex);
         }
         uint16_t addressLow = mapBaseLow + index*16 + fineY*2; // each tile = 16 bytes so each row = 2 bytes
+        if(addressLow >= 0xA000){
+            std::cerr << "[ERROR] Tile data read OOB: addr=0x" << std::hex << addressLow << "\n";
+            std::exit(1);
+        }
         uint8_t lowByte = read(addressLow);
         // GET TILE DATA HIGH 
         uint8_t highByte = read(addressLow + 1);
@@ -416,6 +455,11 @@ void PPU::renderScanline(){
             // high bit becomes bit 1 of the 2 bit colour and low bit becomes bit 0
             uint8_t colour = (high << 1) | low;
             backgroundFIFO.push_back(colour);
+        }
+
+        if(x >= static_cast<int>(spriteLine.size())){
+            std::cerr << "[ERROR] spriteLine index out of bounds: x=" << x << "\n";
+            std::exit(1);
         }
 
         // PUSH sprite pixel
@@ -457,6 +501,15 @@ void PPU::renderScanline(){
             shade = (BGP >> (finalIndex*2)) & 0x03;
         }
 
+        int fbIndex = LY*160 + x;
+
+        if(fbIndex >= 160 * 144){
+            std::cerr << "[ERROR] frameBuffer index out of range: " << fbIndex << "\n";
+            std::exit(1);
+        }
+
         frameBuffer[LY*160 + x] = shade;
     }
+
+    std::cerr << "[DEBUG] renderScanline finished, LY=" << int(LY) << "\n";
 }

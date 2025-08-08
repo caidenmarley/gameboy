@@ -31,6 +31,7 @@ private:
     uint8_t ioRegs[0x80];
     // Interrupt enable
     uint8_t ieReg = 0;
+    uint8_t interruptFlag = 0xE1;
 
     // joyp register state for 0xFF00
     uint8_t joyp = 0xCF;

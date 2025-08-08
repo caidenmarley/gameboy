@@ -1264,7 +1264,21 @@ CMakeFiles/gameboy.dir/src/ppu.cpp.o: ../src/ppu.cpp \
   /usr/include/c++/11/bits/basic_ios.tcc \
   /usr/include/c++/11/bits/ostream.tcc \
   /usr/include/c++/11/istream \
-  /usr/include/c++/11/bits/istream.tcc
+  /usr/include/c++/11/bits/istream.tcc \
+  /usr/include/c++/11/iomanip \
+  /usr/include/c++/11/locale \
+  /usr/include/c++/11/bits/locale_facets_nonio.h \
+  /usr/include/c++/11/ctime \
+  /usr/include/x86_64-linux-gnu/c++/11/bits/time_members.h \
+  /usr/include/x86_64-linux-gnu/c++/11/bits/messages_members.h \
+  /usr/include/libintl.h \
+  /usr/include/c++/11/bits/codecvt.h \
+  /usr/include/c++/11/bits/locale_facets_nonio.tcc \
+  /usr/include/c++/11/bits/locale_conv.h \
+  /usr/include/c++/11/bits/unique_ptr.h \
+  /usr/include/c++/11/bits/quoted_string.h \
+  /usr/include/c++/11/sstream \
+  /usr/include/c++/11/bits/sstream.tcc
 
 CMakeFiles/gameboy.dir/src/timer.cpp.o: ../src/timer.cpp \
   /usr/include/stdc-predef.h \
@@ -1445,6 +1459,24 @@ CMakeFiles/gameboy.dir/src/timer.cpp.o: ../src/timer.cpp \
 
 
 ../src/timer.cpp:
+
+/usr/include/c++/11/sstream:
+
+/usr/include/c++/11/bits/quoted_string.h:
+
+/usr/include/c++/11/bits/unique_ptr.h:
+
+/usr/include/c++/11/bits/locale_conv.h:
+
+/usr/include/c++/11/bits/locale_facets_nonio.tcc:
+
+/usr/include/libintl.h:
+
+/usr/include/x86_64-linux-gnu/c++/11/bits/time_members.h:
+
+/usr/include/c++/11/ctime:
+
+/usr/include/c++/11/bits/locale_facets_nonio.h:
 
 /usr/include/c++/11/bits/unordered_set.h:
 
@@ -1774,6 +1806,8 @@ CMakeFiles/gameboy.dir/src/timer.cpp.o: ../src/timer.cpp \
 
 /usr/include/asm-generic/errno-base.h:
 
+/usr/include/c++/11/iomanip:
+
 /usr/lib/gcc/x86_64-linux-gnu/11/include/avxvnniintrin.h:
 
 /usr/include/c++/11/cctype:
@@ -1826,6 +1860,8 @@ CMakeFiles/gameboy.dir/src/timer.cpp.o: ../src/timer.cpp \
 
 /usr/include/x86_64-linux-gnu/bits/time.h:
 
+/usr/include/x86_64-linux-gnu/c++/11/bits/messages_members.h:
+
 /usr/lib/gcc/x86_64-linux-gnu/11/include/immintrin.h:
 
 /usr/include/c++/11/pstl/pstl_config.h:
@@ -1843,6 +1879,8 @@ CMakeFiles/gameboy.dir/src/timer.cpp.o: ../src/timer.cpp \
 /usr/include/c++/11/ext/alloc_traits.h:
 
 /usr/include/x86_64-linux-gnu/bits/sched.h:
+
+/usr/include/c++/11/locale:
 
 /usr/include/SDL2/SDL_gesture.h:
 
@@ -1971,6 +2009,8 @@ CMakeFiles/gameboy.dir/src/timer.cpp.o: ../src/timer.cpp \
 /usr/include/x86_64-linux-gnu/bits/struct_mutex.h:
 
 /usr/include/c++/11/bits/stl_iterator.h:
+
+/usr/include/c++/11/bits/sstream.tcc:
 
 /usr/include/c++/11/new:
 
