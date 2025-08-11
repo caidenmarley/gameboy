@@ -75,4 +75,34 @@ private:
     uint8_t bankingMode;   // 0 ROM banking, 1 RAM banking
     bool isMbc1;
     bool isMbc2;
+    bool isMbc3;
+    uint8_t mbc3RomBank = 1;      // 1-127 (0 maps to 1)
+    uint8_t mbc3RamBank = 0;      // 0-3 when RAM selected
+    bool    mbc3RamRtcEnable = false;
+    uint8_t mbc3RtcSel = 0xFF; 
+
+    size_t romBankCount() const { return romData.size() / 0x4000; }
+
+    uint8_t effectiveSwitchBank() const {
+        // MBC1: bank = low5 | ( (mode==0 ? hi2 : 0) << 5 )
+        uint8_t low5 = currentRomBank & 0x1F;
+        uint8_t high2 = (bankingMode == 0) ? ((currentRomBank >> 5) & 0x03) : 0;
+        uint8_t bank = (high2 << 5) | low5;
+
+        // Avoid 00/20/40/60 in the low 5 bits
+        if((bank & 0x1F) == 0) bank |= 1;
+
+        size_t n = romBankCount();
+        if(n) bank %= n; // clamp to existing banks
+        return bank;
+    }
+
+    uint8_t effectiveFixedBank() const{
+        if (bankingMode == 0) return 0;   // mode 0 is always bank 0
+        // mode 1 fixed area is selected by the 2bit ram bank (high2)
+        uint8_t bank = (currentRamBank & 0x03) << 5;  // 0,32,64,96
+        size_t n = romBankCount();
+        if (n) bank %= n;
+        return bank;
+    }
 };

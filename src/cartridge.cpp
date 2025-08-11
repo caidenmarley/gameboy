@@ -4,7 +4,8 @@
 #include <stdexcept>
 #include <iostream> 
 
-Cartridge::Cartridge() : currentRomBank(1), currentRamBank(0), ramEnabled(false), bankingMode(0), isMbc1(false), isMbc2(false){}
+Cartridge::Cartridge() : currentRomBank(1), currentRamBank(0), ramEnabled(false), bankingMode(0), isMbc1(false), isMbc2(false), isMbc3(false),
+mbc3RomBank(1), mbc3RamBank(0), mbc3RamRtcEnable(false), mbc3RtcSel(0xFF){}
 
 static const uint8_t expectedNintendoLogo[48] = {
     0xCE, 0xED, 0x66, 0x66, 0xCC, 0x0D, 0x00, 0x0B,
@@ -83,6 +84,7 @@ bool Cartridge::loadRom(const std::string& romPath){
     uint8_t type = header.cartType;
     this->isMbc1 = (type == 0x01 || type == 0x02 || type == 0x03);
     this->isMbc2 = (type == 0x05 || type == 0x06);
+    this->isMbc3 = (type == 0x0F || type == 0x10 || type == 0x11 || type == 0x12 || type == 0x13);
 
     if(isMbc2){
         this->ramData.resize(0x200);
@@ -114,12 +116,29 @@ void Cartridge::unloadRom(){
 }
 
 uint8_t Cartridge::readByte(uint16_t address){
+    // Mbc1
+    if(isMbc1){
+        if(address < 0x4000){
+            size_t index = size_t(effectiveFixedBank()) * 0x4000 + address;
+            return (index < romData.size()) ? romData[index] : 0xFF;
+        }else if(address < 0x8000){
+            uint8_t sb = effectiveSwitchBank();
+            size_t index = size_t(sb) * 0x4000 + (address - 0x4000);
+            return (index < romData.size()) ? romData[index] : 0xFF;
+        }else if(address >= 0xA000 && address < 0xC000 && ramEnabled){
+            size_t index = size_t(currentRamBank) * 0x2000 + (address - 0xA000);
+            return (index < ramData.size()) ? ramData[index] : 0xFF;
+        }else{
+            return 0xFF;
+        }
+    }
+
     // Mbc2
     if(isMbc2){
         if(address < 0x4000){
             return romData[address];
         }else if(address < 0x8000){
-            size_t index = this->currentRomBank * 0x4000 + (address - 0x4000);
+            size_t index = currentRomBank * 0x4000 + (address - 0x4000);
             if(index >= romData.size()){
                 throw std::runtime_error("Mbc2 address is out of romData range");
             }else{
@@ -132,27 +151,29 @@ uint8_t Cartridge::readByte(uint16_t address){
         return 0xFF;
     }
 
-    if(isMbc1){
-        // Mbc1
-        if(address < 0x4000){
-            return this->romData[address];
-        }else if(address < 0x8000){
-            size_t index = this->currentRomBank * 0x4000 + (address - 0x4000);
-            if(index >= romData.size()){
-                throw std::runtime_error("reading data out of rom range");
-            }else{
-                return this->romData[index];
+    // Mbc3
+    if (isMbc3) {
+        if (address < 0x4000) {
+            // fixed bank 0
+            return romData[address];
+        } else if (address < 0x8000) {
+            // switchable bank 1-127
+            uint8_t bank = mbc3RomBank & 0x7F;
+            if (bank == 0) bank = 1;
+            size_t index = size_t(bank) * 0x4000 + (address - 0x4000);
+            return (index < romData.size()) ? romData[index] : 0xFF;
+        } else if (address >= 0xA000 && address < 0xC000) {
+            if (!mbc3RamRtcEnable) return 0xFF;
+            // if 0-3, map to ram banks
+            if (mbc3RtcSel <= 0x03) {
+                size_t index = size_t(mbc3RamBank & 0x03) * 0x2000 + (address - 0xA000);
+                return (index < ramData.size()) ? ramData[index] : 0xFF;
+            } else {
+                // 0x08-0x0C rtc registers 
+                return 0xFF;
             }
-        }else if(address >= 0xA000 && address < 0xC000 && ramEnabled){
-            size_t index = this->currentRamBank * 0x2000 + (address - 0xA000);
-            if(index >= ramData.size()){
-                throw std::runtime_error("reading data out of ram range");
-            }else{
-                return this->ramData[index];
-            }
-        }else{
-            return 0xFF;
         }
+        return 0xFF;
     }
 
     // No banking type 0x00
@@ -168,52 +189,33 @@ uint8_t Cartridge::readByte(uint16_t address){
 }
 
 bool Cartridge::writeByte(uint16_t address, uint8_t byte){
-    // Mbc2
-    if(isMbc2){
-        if(address < 0x2000 && ((address & 0x0100) == 0)){
-            // RAM enable
-            ramEnabled = ((byte & 0x0F) == 0x0A);
-            return true;
-        }else if(address >= 0x2000 && address < 0x4000 && (address & 0x0100)){
-            // ROM bank
-            uint8_t bank = byte & 0x0F;
-            this->currentRomBank = (bank == 0 ? 1 : bank);
-            return true;
-        }else if(address >= 0xA000 && address < 0xA200 && ramEnabled){
-            // RAM write
-            ramData[address - 0xA000] = byte & 0x0F; // low nibble only
-            return true;
-        }
-        return false;
-    }
-
+    // Mbc1
     if(isMbc1){
-        // Mbc1
         if(address < 0x2000){
-            // RAM enable register, sending command to set or clear ramEnabled state
-            this->ramEnabled = ((byte & 0x0F) == 0x0A);   // any value with $A in the lower 4 bits enables the ram
+            // ram enable register sending command to set or clear ramEnabled state
+            ramEnabled = ((byte & 0x0F) == 0x0A);   // any value with A in the lower 4 bits enables the ram
             return true;
         }else if(address < 0x4000){
-            // ROM bank number, selects rom bank number for the 4000-7FFF region, higher bits are discarded leaving 5 lowest bits
+            // rom bank number, selects rom bank number for the 4000-7FFF region higher bits are ignored leaving 5 lowest bits
             uint8_t newBank = byte & 0x1F; // 0x1F=00011111
             if(newBank == 0){
-                newBank = 1;    // if reg set to 0, it behaves as if it is set to $01
+                newBank = 1;    // if reg set to 0 it behaves as if it is set to 1
             }
             // preserve any bits in 7,6,5 (0xE0=11100000) then or brings in the lower 5 bits
-            this->currentRomBank = (this->currentRomBank & 0xE0) | newBank;
+            currentRomBank = (currentRomBank & 0xE0) | newBank;
             return true;
         }else if(address < 0x6000){
-            // RAM bank number, 2 bit reg controlled by banking mode
+            // ram bank number 2 bit reg controlled by banking mode
             uint8_t twoBits = byte & 0x03;
             if(bankingMode == 0){
-                // on larger carts which need a >5 bit bank number this is used to supply an addition 2 bits for the effective number
-                this->currentRomBank = (this->currentRomBank & 0x1F) | (twoBits << 5);
+                // on larger carts which need a >5 bit bank number this used to give additional 2 bits
+                currentRomBank = (currentRomBank & 0x1F) | (twoBits << 5);
             }else{
-                this->currentRamBank = twoBits;
+                currentRamBank = twoBits;
             }
             return true;
         }else if(address < 0x8000){
-            this->bankingMode = byte & 0x01; // low bit determines banking mode
+            bankingMode = byte & 0x01; // low bit determines banking mode
             return true;
         }else if(address >= 0xA000 && address < 0xC000 && ramEnabled){
             size_t index = this->currentRamBank * 0x2000 + (address - 0xA000);
@@ -224,6 +226,65 @@ bool Cartridge::writeByte(uint16_t address, uint8_t byte){
             return true;
         }
     
+        return false;
+    }
+
+    // Mbc2
+    if(isMbc2){
+        if(address < 0x2000 && ((address & 0x0100) == 0)){
+            // ram enable
+            ramEnabled = ((byte & 0x0F) == 0x0A);
+            return true;
+        }else if(address >= 0x2000 && address < 0x4000 && (address & 0x0100)){
+            // rom bank
+            uint8_t bank = byte & 0x0F;
+            this->currentRomBank = (bank == 0 ? 1 : bank);
+            return true;
+        }else if(address >= 0xA000 && address < 0xA200 && ramEnabled){
+            // ram write
+            ramData[address - 0xA000] = byte & 0x0F; // low nibble only
+            return true;
+        }
+        return false;
+    }
+
+    // MBC3
+    if (isMbc3) {
+        if (address < 0x2000) {
+            // ram/rtc enable
+            mbc3RamRtcEnable = ((byte & 0x0F) == 0x0A);
+            return true;
+        } else if (address < 0x4000) {
+            // rom bank 7 bits
+            mbc3RomBank = (byte & 0x7F);
+            if (mbc3RomBank == 0) mbc3RomBank = 1;
+            return true;
+        } else if (address < 0x6000) {
+            // ram bank (0-3) or rtc register select (0x08-0x0C)
+            if ((byte & 0x0F) <= 0x03) {
+                mbc3RamBank = byte & 0x03;
+                mbc3RtcSel  = mbc3RamBank;
+            } else {
+                mbc3RtcSel = byte & 0x0F; // 0x08-0x0C
+            }
+            return true;
+        } else if (address < 0x8000) {
+            // Latch clock data 
+            return true;
+        } else if (address >= 0xA000 && address < 0xC000) {
+            if (!mbc3RamRtcEnable) return false;
+            if (mbc3RtcSel <= 0x03) {
+                size_t index = size_t(mbc3RamBank & 0x03) * 0x2000 + (address - 0xA000);
+                if (index < ramData.size()) {
+                    ramData[index] = byte;
+                    return true;
+                }
+                return false;
+            } else {
+                // rtc write
+                return true;
+            }
+        }
         return false;
     }
 

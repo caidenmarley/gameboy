@@ -5,7 +5,6 @@
 #include <vector>
 #include <algorithm> // stable_sort
 #include <iostream>
-#include <iomanip>
 
 PPU::PPU(Bus& bus) : bus(bus), LCDC(0x91), STAT(0x85), SCY(0x00), SCX(0x00),
                      LY(0x00), LYC(0x00), BGP(0xFC), WY(0x00), WX(0x00){
@@ -17,9 +16,7 @@ PPU::PPU(Bus& bus) : bus(bus), LCDC(0x91), STAT(0x85), SCY(0x00), SCX(0x00),
 void PPU::step(int tStates, CPU& cpu){
     stepDma(tStates);
 
-    if(!(LCDC & 0x80)){
-        return;
-    }
+    if(!(LCDC & 0x80)) return; // LCDC.7 is enable if off ppu is idle
 
     dotCounter += tStates;
 
@@ -28,8 +25,8 @@ void PPU::step(int tStates, CPU& cpu){
         int needed = 0;
 
         switch(mode){
-            case 2: needed = 80; break;
-            case 3: {
+            case 2: needed = 80; break; // OAM scan = 80 dots
+            case 3: { // pixel transfer, length can be different
                 int base = 160; // outputs one pixel to the screen per dot, 160 pixels wide
                 int basePenalty = 12; // 12 dot penalty for initial two tile fetches
                 int scrollPenalty = SCX % 8; // background scroll penalty
@@ -38,26 +35,23 @@ void PPU::step(int tStates, CPU& cpu){
                 needed = base + basePenalty + scrollPenalty + windowPenalty + objPenalty;
             }
             break;
-            case 0: {
+            case 0: { // HBlank
                 int mode3length = 172 + (SCX % 8) + (((LCDC & 0x20) && LY >= WY) ? 6 : 0) + lastMode3Penalty;
                 needed = 376 - mode3length;
             }
             break;
-            case 1: needed = 4560; break;
+            case 1: needed = 456; break; // VBlank, each line is 456 dots
             default: needed = 0; break;
         }
 
-        if (dotCounter < needed){
-            break;
-        }
-
+        if (dotCounter < needed) break;
         dotCounter -= needed; // use up the required dots
 
         switch(mode){
             case 2: {
-                std::cout << "mode 2" << std::endl;
+                // Select up to 10 sprites whose LY+16 overlaps the sprites Y range (set of scalines it covers vertically)
                 scanlineSprites.clear();
-                int spriteHeight = (LCDC & (1 << 2)) ? 16 : 8; // LCDC bit 2 determines sprite height
+                int spriteHeight = (LCDC & (1 << 2)) ? 16 : 8; // LCDC bit 2 determines sprite size 8x8 or 8x16
                 // objects vertical position on screen + 16 = byte 0 of 4 byte sprite chunk in oam
                 int line = LY + 16;
                 for(int i = 0; i < 40; i++){
@@ -77,7 +71,6 @@ void PPU::step(int tStates, CPU& cpu){
             }
             break;
             case 3: {
-                std::cout << "mode 3" << std::endl;
                 renderScanline();
                 // switch to mode 0
                 STAT = (STAT & ~0x03) | 0;
@@ -88,7 +81,6 @@ void PPU::step(int tStates, CPU& cpu){
             }
             break;
             case 0: {
-                std::cout << "mode 0" << std::endl;
                 // advance to next scanline
                 LY++;
 
@@ -103,11 +95,10 @@ void PPU::step(int tStates, CPU& cpu){
                 }
 
                 if(LY == 144){
-                    // enter vblank mode
-                    std::cout << "[PPU] vblank triggering" << std::endl;
+                    // enter vblank mode line 144 to 153
                     STAT = (STAT & ~0x03) | 1; // mode 1
                     frameReady = true;
-                    
+
                     cpu.requestInterrupt(CPU::Interrupt::VBLANK);
 
                     // STAT mode 1 interupt if enabled
@@ -128,14 +119,26 @@ void PPU::step(int tStates, CPU& cpu){
             } 
             break;
             case 1: {
-                std::cout << "mode 1" << std::endl;
-                // after 10 scalines of Vblank wrap to first visible line
-                //LY = 0;
-                STAT = (STAT & ~0x03) | 2;
+                LY++;
+                if(LY == LYC){
+                    STAT |= (1 << 2);
+                    if(STAT & (1 << 6)){
+                        cpu.requestInterrupt(CPU::Interrupt::LCD);
+                    }
+                }else{
+                    STAT &= ~(1 << 2);
+                }
 
-                // if mode 2 stat interupts are enabled request one
-                if(STAT & (1 << 5)){ // STAT bit 5 mode 2 interupt enable
-                    cpu.requestInterrupt(CPU::Interrupt::LCD);
+                if(LY > 153){
+                    // end of vblank, new frame
+                    LY = 0;
+                    STAT = (STAT & ~0x03) | 2;
+                    // if mode 2 stat interupts are enabled request one
+                    if(STAT & (1 << 5)){ // STAT bit 5 mode 2 interupt enable
+                        cpu.requestInterrupt(CPU::Interrupt::LCD);
+                    }
+                }else{
+                    STAT = (STAT & ~0x03) | 1;
                 }
             }
             break;
@@ -144,31 +147,23 @@ void PPU::step(int tStates, CPU& cpu){
 }
 
 uint8_t PPU::read(uint16_t address) const{
-    // VRAM 8000-9FFF
+    // VRAM 8000-9FFF, cant access during mode 3, pixel transfer
     if(address >= 0x8000 && address <= 0x9FFF){
-        if(vramAccessible()){
-            return vram[address - 0x8000];
-        }else{
-            return 0xFF;
-        }
+        return vramAccessible() ? vram[address - 0x8000] : 0xFF;
     }
 
     // OAM FE00-FE9F
     if(address >= 0xFE00 && address <= 0xFE9F){
-        if(oamAccessible()){
-            return oam[address - 0xFE00];
-        }else{
-            return 0xFF;
-        }
+        return oamAccessible() ? oam[address - 0xFE00] : 0xFF;
     }
 
     // LCD control regs
     switch(address){
         case LCDC_ADDRESS: return LCDC;
-        case STAT_ADDRESS: return STAT;
+        case STAT_ADDRESS: return STAT;  
         case SCY_ADDRESS: return SCY;
         case SCX_ADDRESS: return SCX;
-        case LY_ADDRESS: std::cerr << "[PPU LY] LY READ = " << std::dec << int(LY) << "\n"; return LY;
+        case LY_ADDRESS: return LY;
         case LYC_ADDRESS: return LYC;
         case BGP_ADDRESS: return BGP;
         case OBP0_ADDRESS: return OBP0;
@@ -187,15 +182,14 @@ void PPU::write(uint16_t address, uint8_t byte){
         oamDmaCycles = 160;
 
         for(int i = 0; i < 0xA0; ++i){
-            oam[i] = bus.read(dmaSource + i);
+            oam[i] = bus.readDuringDMA(dmaSource + i);
         }
+
         return;
     }
 
-    // VRAM 8000-9FFF
+    // VRAM 8000-9FFF, blocked in mode 3
     if(address >= 0x8000 && address <= 0x9FFF){
-        std::cerr << "[VRAM] write 0x" << std::hex << address
-                  << " = 0x" << int(byte) << "\n";
         if(vramAccessible()){
             vram[address - 0x8000] = byte;
         }else{
@@ -203,7 +197,7 @@ void PPU::write(uint16_t address, uint8_t byte){
         }
     }
 
-    // OAM FE00-FE9F
+    // OAM FE00-FE9F, blocked in mode 2 and 3
     if(address >= 0xFE00 && address <= 0xFE9F){
         if(oamAccessible()){
             oam[address - 0xFE00] = byte;
@@ -211,24 +205,16 @@ void PPU::write(uint16_t address, uint8_t byte){
             return;
         }
     }
-    if(address == 0xFF40){
-        std::cout<<"temp" <<std::endl;
-    }
+
     // LCD control regs
     switch(address){
         case LCDC_ADDRESS: {
-            std::cout<<"LCDCHere"<<std::endl;
             bool wasOn = LCDC & 0x80;
             LCDC = byte;
-            std::cout << "BYTE VAL" << std::hex << int(byte) << std::endl;
             bool isOn = LCDC & 0x80;
-            std::cout<<"wasON" << std::boolalpha << wasOn << std::endl;
-            std::cout<<"isON" << std::boolalpha << isOn << std::endl;
             if(wasOn && !isOn){
-                std::cout<<"disable" << std::endl;
                 disableLCD();
             }else if(!wasOn && isOn){
-                std::cout << "enable" << std::endl;
                 enableLCD();
             }
         } break;
@@ -313,25 +299,19 @@ int PPU::computeObjPenalty(){
 
 void PPU::renderScanline(){
     if (LY >= 144) {
+        // guard to prevent rendering in vblank lines
         std::cerr << "[WARNING] renderScanline() called with LY >= 144 (" << int(LY) << "), skipping.\n";
         return;
     }
-    std::cerr << "[ERROR] renderScanline start, LY=" << int(LY) << "\n";
 
     backgroundFIFO.clear();
     spriteFIFO.clear();
-    std::vector<SpritePixel> spriteLine;
-    spriteLine.resize(160, {0,false,0});
+
+    std::vector<SpritePixel> spriteLine(160, {0,false,0});
 
     int spriteHeight = (LCDC & (1<<2)) ? 16 : 8;
 
-    size_t i = 0;
     for(const Sprite& sprite : scanlineSprites){
-        if (i >= scanlineSprites.size()) {
-            std::cerr << "[ERROR] Sprite index " << i << " out of range\n";
-            std::exit(1);
-        }
-        i++;
         int oY = sprite.y;
         int oX = sprite.x;
         int tile = sprite.tileIndex;
@@ -339,6 +319,7 @@ void PPU::renderScanline(){
 
         // which row of this sprite to draw
         int row = LY + 16 - oY;
+
         if(flags & 0x40){   // y flip flag
             row = spriteHeight - 1 - row;
         }
@@ -357,8 +338,8 @@ void PPU::renderScanline(){
             std::cerr << "[ERROR] Sprite tile address out-of-bounds: 0x" << std::hex << address << "\n";
             std::exit(1);
         }
-        uint8_t low = read(address);
-        uint8_t high = read(address + 1);
+        uint8_t low = vramReadRaw(address);
+        uint8_t high = vramReadRaw(address + 1);
 
         bool xFlip = flags & 0x20;
         bool bgPriority = flags & 0x80; // obj to background priority
@@ -383,95 +364,77 @@ void PPU::renderScanline(){
         }
     }
 
+    // helper to push one 8 pixel background/window tile row into the FIFO
+    auto pushTileRow = [&](bool window, int xForCalc){
+        // LCDC.4=1 0x8000 usigned index, LCDC.4=0 0x8800 signed index
+        uint16_t mapBase =
+            (!window && (LCDC & 0x08)) ? 0x9C00 :
+            ( window && (LCDC & 0x40)) ? 0x9C00 : 0x9800;
+
+        int tileCol = window ? (xForCalc - (WX - 7)) / 8
+                                    : ((SCX + xForCalc) / 8) & 0x1F;
+        int tileRow = window ? (LY - WY) / 8
+                                    : ((LY + SCY) & 0xFF) / 8;
+
+        uint16_t tileMapAddress = mapBase + tileRow * 32 + tileCol;
+        uint8_t tileIndex = vramReadRaw(tileMapAddress);
+
+        int fetcherY = window ? (LY - WY) : ((LY + SCY) & 0xFF);
+        int fineY = fetcherY % 8;
+
+        uint16_t addressLow;
+        if (LCDC & 0x10) {
+            addressLow = 0x8000 + uint16_t(tileIndex) * 16 + fineY * 2;
+        } else {
+            int16_t sIndex = int8_t(tileIndex);
+            addressLow = uint16_t(int32_t(0x9000) + sIndex * 16 + fineY * 2);
+        }
+
+        uint8_t low  = vramReadRaw(addressLow);
+        uint8_t high = vramReadRaw(addressLow + 1);
+
+        for (int bit = 7; bit >= 0; --bit) {
+            uint8_t c = (((high >> bit) & 1) << 1) | ((low >> bit) & 1);
+            backgroundFIFO.push_back(c);
+        }
+    };
+
+    // if rendering the background first must drop SCX%8 pixels to account for fine scroll
+    bool inWindow0 = ((0 >= (WX - 7)) && (LY >= WY) && (LCDC & 0x20));
+    pushTileRow(inWindow0, 0);
+
+    if(!inWindow0){
+        int drop = SCX % 8;
+        while (drop-- > 0 && !backgroundFIFO.empty()) backgroundFIFO.pop_front();
+    }
+
+    bool prevInWindow = inWindow0;
 
     // iterate over the 160 horizontal pixels
     for(int x = 0; x < 160; ++x){
-        // GET TILE
-        // screen coords of top left corner of window are (WX-7, WY)
-        // LCDC bit 5 controls whether window will be displayed or not
-        // LY = 0 is top of screen, larger = further down
-        bool inWindow = (x >= (WX - 7)) && (LY >= WY) && (LCDC & 0x20); 
-        
-        uint16_t mapBase;
-        if((LCDC & 0x08) && !inWindow){
-            // when LCDC.3 is set and X coord of current scanline is not in window then tilemap 0x9C00 is used
-            mapBase = 0x9C00;
-        }else if((LCDC & 0x40) && inWindow){
-            // when LCDC.6 is set and X coord of current scanline is in window then tilemap 0x9C00 is used
-            mapBase = 0x9C00;
-        }else{
-            mapBase = 0x9800;
+        bool inWindow = (x >= (WX-7)) && (LY >= WY) && (LCDC & 0x20);
+
+        if(!prevInWindow && inWindow){
+            // if just entered window then clear bg fifo
+            backgroundFIFO.clear();
         }
 
-        int tileCol, tileRow;
-        if(inWindow){
-            // use x,y coords for window tile if in window
-            tileCol = (x - (WX - 7)) / 8; // how many 8 pixels steps has been moved from window origin
-            tileRow = (LY - WY) / 8; // each window is 8 pixels tall
-        }else{
-            // otherwise X = ((SCX / 8) + fetcher’s X coordinate) & $1F
-            // Y = currentScanline + SCY) & 255
-            tileCol = ((SCX + x) / 8) & 0x1F;   // equivalent to the above formula
-            tileRow = ((LY + SCY) & 0xFF) / 8;
+        if(backgroundFIFO.size() < 8){
+            // refill fifo when low
+            pushTileRow(inWindow, x);
         }
 
-        uint16_t tileMapAddress = mapBase + tileRow * 32 + tileCol;
-    
-        if(tileMapAddress >= 0xA000){
-            std::cerr << "[ERROR] Tile map read OOB: addr=0x" << std::hex << tileMapAddress << "\n";
-            std::exit(1);
-        }
-        uint8_t tileIndex = read(tileMapAddress); // tile map is 32 tiles wide
-
-        // fetcherY is the row within the tilemap
-        int fetcherY = inWindow
-                     ? (LY - WY)    // windows vertical offset
-                     : ((LY + SCY) & 0xFF); // backgrounds scroll + scanline
-        int fineY = fetcherY % 8;   // which row 0-7 of the tile
-
-        // GET TILE DATA LOW
-        uint16_t mapBaseLow;
-        uint8_t index;
-        if(LCDC & 0x10){
-            mapBaseLow = 0x8000;
-            index = tileIndex;
-        }else{
-            mapBaseLow = 0x9000;
-            index = int8_t(tileIndex);
-        }
-        uint16_t addressLow = mapBaseLow + index*16 + fineY*2; // each tile = 16 bytes so each row = 2 bytes
-        if(addressLow >= 0xA000){
-            std::cerr << "[ERROR] Tile data read OOB: addr=0x" << std::hex << addressLow << "\n";
-            std::exit(1);
-        }
-        uint8_t lowByte = read(addressLow);
-        // GET TILE DATA HIGH 
-        uint8_t highByte = read(addressLow + 1);
-
-        // PUSH 8 background pixels
-        for(int bit = 7; bit >= 0; --bit){
-            uint8_t high = (highByte >> bit) & 1;
-            uint8_t low = (lowByte >> bit) & 1;
-            // high bit becomes bit 1 of the 2 bit colour and low bit becomes bit 0
-            uint8_t colour = (high << 1) | low;
-            backgroundFIFO.push_back(colour);
-        }
-
-        if(x >= static_cast<int>(spriteLine.size())){
-            std::cerr << "[ERROR] spriteLine index out of bounds: x=" << x << "\n";
-            std::exit(1);
-        }
-
-        // PUSH sprite pixel
+        // push sprite pixel
         spriteFIFO.push_back(spriteLine[x]);
 
-        // PIXEL RENDERING
+        // pixel rendering
         uint8_t bgColour = backgroundFIFO.front();
         backgroundFIFO.pop_front();
 
         uint8_t objColour = 0;
         bool objHasPriority = false;
         uint8_t objPalette = 0;
+
         if((LCDC & 0x02) && !spriteFIFO.empty()){   // if obj enable and queue is empty
             SpritePixel sprite = spriteFIFO.front();
             spriteFIFO.pop_front();
@@ -485,16 +448,15 @@ void PPU::renderScanline(){
             }
         }
 
-        uint8_t finalIndex;
+        // objcolour == 0 then use backg
+        // if objs priority flag is clear (obj over backg), it covers background regardless of backgrounds colour
+        // if objs priority flag is set (obj behind backg), it only shows when the background pixel is colour 0
+        bool spriteCovers = (objColour != 0) && (objHasPriority || (bgColour == 0));
 
-        if(objHasPriority){
-            finalIndex = objColour;
-        }else{
-            finalIndex = bgColour;
-        }
+        uint8_t finalIndex = spriteCovers ? objColour : bgColour;
 
         uint8_t shade;
-        if(objHasPriority){
+        if(spriteCovers){
             uint8_t paletteReg = (objPalette == 0) ? OBP0 : OBP1;
             shade = (paletteReg >> (finalIndex*2)) & 0x03;
         }else{
@@ -509,7 +471,7 @@ void PPU::renderScanline(){
         }
 
         frameBuffer[LY*160 + x] = shade;
-    }
 
-    std::cerr << "[DEBUG] renderScanline finished, LY=" << int(LY) << "\n";
+        prevInWindow = inWindow;
+    }
 }

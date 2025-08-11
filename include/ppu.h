@@ -53,12 +53,6 @@ public:
     void clearNewFrameFlag(){
         frameReady = false;
     }
-    uint8_t getSTAT() const{
-        return STAT;
-    }
-    uint8_t getLCDC() const{
-        return LCDC;
-    }
 private:
     Bus& bus;
 
@@ -89,16 +83,15 @@ private:
     static constexpr uint16_t WY_ADDRESS = 0xFF4A; 
     static constexpr uint16_t WX_ADDRESS = 0xFF4B; 
 
-    inline uint8_t currentMode() const{ return (STAT & 0x03);}
     inline bool vramAccessible() const{ 
         if(!(LCDC & 0x80)) return true; // if LCDC bit 7 is disable VRAM is always accessible
-        uint8_t m = currentMode();
+        uint8_t m = STAT & 0x03;
         return m != 3;
     }
     inline bool oamAccessible() const{
         if(!(LCDC & 0x80)) return true; // if LCDC bit 7 is disable OAM is always accessible
         if (oamDmaActive) return false;
-        uint8_t m = currentMode();
+        uint8_t m = STAT & 0x03;
         return m == 0 || m == 1;
     }
 
@@ -107,7 +100,12 @@ private:
 
     int dotCounter = 0;
 
+    /**
+     * Computes an objects penalty for mode 3 based on how many stalls occur when a new 
+     * background tile must be fetched mid object
+     */
     int computeObjPenalty();
+
     int lastMode3Penalty;
 
     void renderScanline();
@@ -141,7 +139,7 @@ private:
         STAT = (STAT & ~0x03) | 2; // mode 2 for new frame
     }
 
-    //OAM DMA state
+    // OAM DMA state
     bool oamDmaActive = false;
     int oamDmaCycles = 0;
     uint16_t dmaSource = 0;
@@ -153,5 +151,17 @@ private:
         if(oamDmaCycles <= 0){
             oamDmaActive = false;
         }
+    }
+
+    inline uint8_t vramReadRaw(uint16_t address) const{
+        size_t index = address - 0x8000;
+        if(index >= sizeof(vram)) return 0xFF;
+        else return vram[index];
+    }
+
+    inline uint8_t oamReadRaw(uint16_t address) const{
+        size_t index = address - 0xFE00;
+        if(index >= sizeof(oam)) return 0xFF;
+        else return oam[index];
     }
 };

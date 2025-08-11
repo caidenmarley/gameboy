@@ -10,6 +10,12 @@ public:
      */
     CPU(Bus& bus);
 
+    /**
+     * Steps through opcodes, fetching decoding and executing returning the amount
+     * of machine cycles the step took
+     * 
+     * @return number of M cycles
+     */
     int step();
     
     Bus& bus;

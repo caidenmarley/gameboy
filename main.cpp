@@ -77,9 +77,7 @@ int main(int argc, char* argv[]){
     glGenTextures(1, &gb_tex);
     glBindTexture(GL_TEXTURE_2D, gb_tex);
     // allocate empty RGBA buffer for 160×144
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-                 160, 144, 0,
-                 GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,160, 144, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     // nearest neighbor scaling so pixels stay sharp
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -115,37 +113,22 @@ int main(int argc, char* argv[]){
         ImGui_ImplSDL2_NewFrame(window);
         ImGui::NewFrame();
 
-        std::cout << "[CPU A] " << std::hex << int(cpu.A) << std::endl;
-        std::cerr << "LCDC=" << std::hex << int(bus.ppu.getLCDC())
-          << "  STAT=" << int(bus.ppu.getSTAT()) << "\n";
-        // — Emulator: run until VBlank —
+        // run until vblank
         while (!bus.ppu.isFrameReady()) {
             int m = cpu.step();
             bus.step(m * 4, cpu);
         }
         bus.ppu.clearNewFrameFlag();
 
-        static int frameCounter = 0;
-        std::cout << "frameCounter" << frameCounter << std::endl;
-        if (++frameCounter == 1000) {
-            std::cerr << "[HACK] Forcing LCDC to 0x91\n";
-            bus.write(0xFF40, 0x91);
-        }
-        if(frameCounter >= 1000){
-            std::cout << "[POST HACK] LCDC" << std::hex << int(bus.ppu.getLCDC()) << std::endl;
-        }
+        // Grab the 0–3 indices from the PPU
+        const uint8_t* indexBuffer = bus.ppu.getFrameBuffer();
 
-
-        // — Upload frame to GPU texture —
-        // 1) Grab the 0–3 indices from the PPU:
-        const uint8_t* idx_buf = bus.ppu.getFrameBuffer();
-
-        // 2) Expand via your dmg_palette into a uint32_t RGBA buffer:
+        // Expand into a uint32_t RGBA buffer:
         for (int i = 0; i < 160*144; i++) {
-            gpu_frame[i] = dmg_palette[idx_buf[i] & 3];
+            gpu_frame[i] = dmg_palette[indexBuffer[i] & 3];
         }
 
-        // 3) Upload the 160×144×4‐byte RGBA image:
+        // 3) Upload the 160×144×4 byte RGBA image:
         glBindTexture(GL_TEXTURE_2D, gb_tex);
         glTexSubImage2D(GL_TEXTURE_2D, 0,
                         0, 0, 160, 144,

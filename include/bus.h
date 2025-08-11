@@ -5,11 +5,30 @@
 #include "timer.h"
 #include "ppu.h"
 
+class CPU;
+
 class Bus{
 public:
     Bus(Cartridge& cart);
 
+    /**
+     * Reads a 16 bit address passing the handling of the memory retrieval to whatever section the memory points to
+     * 
+     * @param address 16 bit address to read from
+     * @return byte stored at that address
+     */
     uint8_t read(uint16_t address);
+    /**
+     * Same as read except there is no guard for dma
+     */
+    uint8_t readDuringDMA(uint16_t address);
+    /**
+     * Writes a byte to a specified 16 bit address by passing the write handling to whatever section the memory
+     * points to
+     * 
+     * @param address 16 bit address to write to
+     * @param byte the byte to write to that address
+     */
     void write(uint16_t address, uint8_t byte);
     /**
      * advances all peripherals by tStates
