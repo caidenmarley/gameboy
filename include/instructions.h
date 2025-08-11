@@ -4,7 +4,6 @@
 #include "bus.h"
 #include "cpu.h"
 #include "instructions16.h"
-#include <iostream>
 
 void addToA(uint8_t value, CPU& cpu){
     uint16_t result = cpu.A + value;
@@ -70,12 +69,6 @@ void orWithA(uint8_t value, CPU& cpu){
 
 void compareWithA(uint8_t value, CPU& cpu){
     uint16_t result = cpu.A - value;
-    if(cpu.A == 144){
-        std::cerr << "[COMPARE] A=" << int(cpu.A)
-                  << " value=" << int(value)
-                  << " result=" << int(result & 0xFF)
-                  << " → Z=" << ((result & 0xFF) == 0 ? 1 : 0) << "\n";
-    }
     cpu.setFlag(cpu.zF, (result & 0xFF)==0);
     cpu.setFlag(cpu.nF, true);
     cpu.setFlag(cpu.hF, (cpu.A & 0x0F) < (value & 0x0F));
@@ -1705,15 +1698,6 @@ int decodeAndExecute(CPU& cpu, Bus& bus, uint8_t opcode){
         case 0xE0: // LD (a8), A
             {
                 uint8_t offset = bus.read(cpu.PC++);
-                if ((0xFF00u + offset) == 0xFF40 || (0xFF00u + offset) == 0xFF41) {
-                    std::cerr 
-                    << ">>> [CPU] E0 LDH write to " 
-                    << std::hex << std::showbase << (0xFF00u + offset) 
-                    << " = 0x" << std::hex << int(cpu.A)
-                    << " @ ROM_PC=0x" << std::hex << cpu.PC 
-                    << "\n";
-                    std::cout << "cpu@a" << std::hex << int(cpu.A) << std::endl;
-                }
                 bus.write(0xFF00 + offset, cpu.A);
                 return 3;
             }
@@ -1726,14 +1710,6 @@ int decodeAndExecute(CPU& cpu, Bus& bus, uint8_t opcode){
             break;
         case 0xE2: // LD (C), A
             {
-                if ((0xFF00u + cpu.C) == 0xFF40 || (0xFF00u + cpu.C) == 0xFF41) {
-                    std::cerr 
-                    << ">>> [CPU] E2 LDH write to " 
-                    << std::hex << std::showbase << (0xFF00u + cpu.C) 
-                    << " = 0x" << std::hex << int(cpu.A)
-                    << " @ ROM_PC=0x" << std::hex << cpu.PC 
-                    << "\n";
-                }
                 bus.write(0xFF00 + cpu.C, cpu.A);
                 return 2;
             }

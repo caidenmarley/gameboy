@@ -37,6 +37,12 @@ public:
      * @param cpu reference to cpu
      */
     void step(int tStates, CPU& cpu);
+    /**
+     * Sets the state for the joyp register to emulate key presses
+     * 
+     * @param keyState array containing bools pressed/not pressed for each key
+     */
+    void setKeyState(const bool keyState[8]);
     PPU ppu;
 private:
     Cartridge& cart;
@@ -54,4 +60,6 @@ private:
 
     // joyp register state for 0xFF00
     uint8_t joyp = 0xCF;
+    bool keys[8]{}; // current key states. true = pressed
+    bool prevKeys[8]{}; // used to detect rising edges
 };

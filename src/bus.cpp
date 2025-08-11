@@ -80,7 +80,6 @@ uint8_t Bus::readDuringDMA(uint16_t address) {
     else return ieReg;
 }
 
-
 void Bus::write(uint16_t address, uint8_t byte){
     if(address == 0xFF00){
         joyp = (byte & 0x30) | 0xCF; // only bit 4 and 5 are writable
@@ -103,7 +102,7 @@ void Bus::write(uint16_t address, uint8_t byte){
     else if(address < 0xE000) wram[address - 0xC000] = byte; // WRAM
     else if(address < 0xFE00) wram[address - 0xE000] = byte; // WRAM
     else if(address < 0xFEA0) ppu.write(address, byte); // OAM
-    else if(address < 0xFF00){} // unused
+    else if(address < 0xFF00) return; // unused
     else if(address < 0xFF04) ioRegs[address - 0xFF00] = byte; // IO regs, before timer
     else if(address < 0xFF08) timer.write(address, byte); // Timer regs
     else if(address >= 0xFF40 && address <= 0xFF4B) ppu.write(address, byte); // LCDC, STAT etc and DMA
@@ -117,4 +116,17 @@ void Bus::step(int tStates, CPU& cpu){
     timer.step(tStates, cpu);
     ppu.step(tStates, cpu);
     // TODO
+}
+
+void Bus::setKeyState(const bool keyState[8]){
+    bool requestInterrupt = false;
+    for(int i = 0; i < 8; ++i){
+        if(!prevKeys[i] && keys[i]) requestInterrupt = true; // rising edge
+        prevKeys[i] = keys[i];
+        keys[i] = keyState[i];
+    }
+    if(requestInterrupt){
+        // bit 4 IF 
+        interruptFlag |= 0x10;
+    }
 }

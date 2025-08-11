@@ -16,7 +16,7 @@ static const uint32_t dmg_palette[4] = {
     0xFF555555, // dark gray
     0xFF000000, // black
 };
-bool key_state[8] = {false,false,false,false, false,false,false,false};
+bool gKeyState[8] = {false,false,false,false, false,false,false,false};
 
 int main(int argc, char* argv[]){
 
@@ -96,14 +96,14 @@ int main(int argc, char* argv[]){
             else if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
                 bool down = (event.type == SDL_KEYDOWN);
                 switch (event.key.keysym.sym) {
-                    case SDLK_z:          key_state[0] = down; break; // A
-                    case SDLK_x:          key_state[1] = down; break; // B
-                    case SDLK_BACKSPACE:  key_state[2] = down; break; // Select
-                    case SDLK_RETURN:     key_state[3] = down; break; // Start
-                    case SDLK_RIGHT:      key_state[4] = down; break;
-                    case SDLK_LEFT:       key_state[5] = down; break;
-                    case SDLK_UP:         key_state[6] = down; break;
-                    case SDLK_DOWN:       key_state[7] = down; break;
+                    case SDLK_e: gKeyState[0] = down; break; // A
+                    case SDLK_q: gKeyState[1] = down; break; // B
+                    case SDLK_BACKSPACE: gKeyState[2] = down; break; // Select
+                    case SDLK_SPACE: gKeyState[3] = down; break; // Start
+                    case SDLK_d: gKeyState[4] = down; break; // Right
+                    case SDLK_a: gKeyState[5] = down; break; // Left
+                    case SDLK_w: gKeyState[6] = down; break; // Up
+                    case SDLK_s: gKeyState[7] = down; break; // Down
                 }
             }
         }
