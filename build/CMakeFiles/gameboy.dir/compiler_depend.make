@@ -373,12 +373,7 @@ CMakeFiles/gameboy.dir/main.cpp.o: ../main.cpp \
   /usr/include/SDL2/SDL_locale.h \
   /usr/include/SDL2/SDL_misc.h \
   /usr/include/SDL2/SDL_opengl.h \
-  /usr/include/SDL2/SDL_opengl_glext.h \
-  /usr/include/imgui/imgui.h \
-  /usr/include/imgui/imconfig.h \
-  /usr/include/assert.h \
-  /usr/include/imgui/backends/imgui_impl_sdl.h \
-  /usr/include/imgui/backends/imgui_impl_opengl3.h
+  /usr/include/SDL2/SDL_opengl_glext.h
 
 CMakeFiles/gameboy.dir/src/bus.cpp.o: ../src/bus.cpp \
   /usr/include/stdc-predef.h \
@@ -1449,10 +1444,6 @@ CMakeFiles/gameboy.dir/src/timer.cpp.o: ../src/timer.cpp \
 
 /usr/include/c++/11/algorithm:
 
-/usr/include/imgui/backends/imgui_impl_sdl.h:
-
-/usr/include/imgui/imconfig.h:
-
 /usr/include/SDL2/SDL_opengl_glext.h:
 
 /usr/include/SDL2/SDL_opengl.h:
@@ -1514,8 +1505,6 @@ CMakeFiles/gameboy.dir/src/timer.cpp.o: ../src/timer.cpp \
 /usr/lib/gcc/x86_64-linux-gnu/11/include/f16cintrin.h:
 
 /usr/lib/gcc/x86_64-linux-gnu/11/include/fmaintrin.h:
-
-/usr/include/imgui/imgui.h:
 
 /usr/include/SDL2/SDL_system.h:
 
@@ -1925,8 +1914,6 @@ CMakeFiles/gameboy.dir/src/timer.cpp.o: ../src/timer.cpp \
 
 /usr/include/c++/11/ext/numeric_traits.h:
 
-/usr/include/imgui/backends/imgui_impl_opengl3.h:
-
 /usr/include/SDL2/SDL_filesystem.h:
 
 /usr/include/c++/11/bits/iterator_concepts.h:
@@ -2010,8 +1997,6 @@ CMakeFiles/gameboy.dir/src/timer.cpp.o: ../src/timer.cpp \
 /usr/include/c++/11/bits/move.h:
 
 /usr/include/c++/11/bits/hash_bytes.h:
-
-/usr/include/assert.h:
 
 /usr/include/SDL2/SDL_joystick.h:
 
