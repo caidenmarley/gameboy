@@ -56,7 +56,7 @@ int main(int argc, char* argv[]){
     ImGui::CreateContext(); // allocate internal state
     ImGui::StyleColorsDark(); // Choose a dark color scheme
     
-    // Hook imgui into SDL2 (for inputs) and OpenGL3 (for rendering)
+    // Hook imgui into SDL2 (inputs) and OpenGL3 (rendering)
     ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
     ImGui_ImplOpenGL3_Init("#version 330");
     
@@ -108,6 +108,8 @@ int main(int argc, char* argv[]){
             }
         }
 
+        bus.setKeyState(gKeyState);
+
         // start new imgui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL2_NewFrame(window);
@@ -120,15 +122,15 @@ int main(int argc, char* argv[]){
         }
         bus.ppu.clearNewFrameFlag();
 
-        // Grab the 0–3 indices from the PPU
+        // Grab the 0-3 indices from the PPU
         const uint8_t* indexBuffer = bus.ppu.getFrameBuffer();
 
-        // Expand into a uint32_t RGBA buffer:
+        // Expand into a uint32_t RGBA buffer
         for (int i = 0; i < 160*144; i++) {
             gpu_frame[i] = dmg_palette[indexBuffer[i] & 3];
         }
 
-        // 3) Upload the 160×144×4 byte RGBA image:
+        // upload the 160×144×4 byte RGBA image
         glBindTexture(GL_TEXTURE_2D, gb_tex);
         glTexSubImage2D(GL_TEXTURE_2D, 0,
                         0, 0, 160, 144,

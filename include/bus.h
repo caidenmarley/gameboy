@@ -61,5 +61,4 @@ private:
     // joyp register state for 0xFF00
     uint8_t joyp = 0xCF;
     bool keys[8]{}; // current key states. true = pressed
-    bool prevKeys[8]{}; // used to detect rising edges
 };
