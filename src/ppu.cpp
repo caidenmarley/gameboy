@@ -365,18 +365,15 @@ void PPU::renderScanline(){
     }
 
     // helper to push one 8 pixel background/window tile row into the FIFO
-    auto pushTileRow = [&](bool window, int xForCalc){
+    auto pushTileRow = [&](bool window, int tileCol){
         // LCDC.4=1 0x8000 usigned index, LCDC.4=0 0x8800 signed index
         uint16_t mapBase =
             (!window && (LCDC & 0x08)) ? 0x9C00 :
             ( window && (LCDC & 0x40)) ? 0x9C00 : 0x9800;
 
-        int tileCol = window ? (xForCalc - (WX - 7)) / 8
-                                    : ((SCX + xForCalc) / 8) & 0x1F;
-        int tileRow = window ? (LY - WY) / 8
-                                    : ((LY + SCY) & 0xFF) / 8;
+        int tileRow = window ? (LY - WY) / 8 : ((LY + SCY) & 0xFF) / 8;
 
-        uint16_t tileMapAddress = mapBase + tileRow * 32 + tileCol;
+        uint16_t tileMapAddress = mapBase + tileRow * 32 + (tileCol & 0x1F); // 0x1F = 31 base 10, columns are indexs from 0-31
         uint8_t tileIndex = vramReadRaw(tileMapAddress);
 
         int fetcherY = window ? (LY - WY) : ((LY + SCY) & 0xFF);
@@ -399,13 +396,22 @@ void PPU::renderScanline(){
         }
     };
 
-    // if rendering the background first must drop SCX%8 pixels to account for fine scroll
-    bool inWindow0 = ((0 >= (WX - 7)) && (LY >= WY) && (LCDC & 0x20));
-    pushTileRow(inWindow0, 0);
+    // initial fetch and fine scroll drop
+    const int scxFine = SCX & 7; // same as % 8, more efficient
+    int backgTileCol = (SCX >> 3) & 0x1F; // same as / 8, again more efficient
+    int windowTileCol = 0; // window starts at column 0
 
-    if(!inWindow0){
-        int drop = SCX % 8;
+
+    bool inWindow0 = ((0 >= (WX - 7)) && (LY >= WY) && (LCDC & 0x20));
+
+    if(inWindow0){
+        pushTileRow(true, 0);
+        windowTileCol = (windowTileCol + 1) & 0x1F; // advance to next col
+    }else{
+        pushTileRow(false, backgTileCol);
+        int drop = scxFine; // one time fine drop
         while (drop-- > 0 && !backgroundFIFO.empty()) backgroundFIFO.pop_front();
+        backgTileCol = (backgTileCol + 1) & 0x1F; // next tile
     }
 
     bool prevInWindow = inWindow0;
@@ -417,11 +423,17 @@ void PPU::renderScanline(){
         if(!prevInWindow && inWindow){
             // if just entered window then clear bg fifo
             backgroundFIFO.clear();
+            windowTileCol = 0;
         }
 
         if(backgroundFIFO.size() < 8){
             // refill fifo when low
-            pushTileRow(inWindow, x);
+            if(inWindow){
+                pushTileRow(true, windowTileCol++);
+            }else{
+                pushTileRow(false, backgTileCol);
+                backgTileCol = (backgTileCol + 1) & 0x1F;
+            }
         }
 
         // push sprite pixel
