@@ -10,7 +10,7 @@
 #include <backends/imgui_impl_sdl.h>
 #include <backends/imgui_impl_opengl3.h>
 
-static const uint32_t dmg_palette[4] = {
+static const uint32_t dmgPalette[4] = {
     0xFFFFFFFF, // white
     0xFFAAAAAA, // light gray
     0xFF555555, // dark gray
@@ -48,8 +48,8 @@ int main(int argc, char* argv[]){
         return 1;
     }
 
-    SDL_GLContext gl_context = SDL_GL_CreateContext(window);
-    SDL_GL_MakeCurrent(window, gl_context);
+    SDL_GLContext glContext = SDL_GL_CreateContext(window);
+    SDL_GL_MakeCurrent(window, glContext);
     SDL_GL_SetSwapInterval(1); // 1 = enable vsync
 
     IMGUI_CHECKVERSION(); // check DLL/API version match
@@ -57,7 +57,7 @@ int main(int argc, char* argv[]){
     ImGui::StyleColorsDark(); // Choose a dark color scheme
     
     // Hook imgui into SDL2 (inputs) and OpenGL3 (rendering)
-    ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
+    ImGui_ImplSDL2_InitForOpenGL(window, glContext);
     ImGui_ImplOpenGL3_Init("#version 330");
     
     const std::string path = argv[1];
@@ -71,11 +71,11 @@ int main(int argc, char* argv[]){
     Bus bus(cart);
     CPU cpu(bus);
 
-    GLuint gb_tex = 0;
-    std::vector<uint32_t> gpu_frame(160 * 144);
+    GLuint gbTexture = 0;
+    std::vector<uint32_t> gpuFrame(160 * 144);
 
-    glGenTextures(1, &gb_tex);
-    glBindTexture(GL_TEXTURE_2D, gb_tex);
+    glGenTextures(1, &gbTexture);
+    glBindTexture(GL_TEXTURE_2D, gbTexture);
     // allocate empty RGBA buffer for 160×144
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,160, 144, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     // nearest neighbor scaling so pixels stay sharp
@@ -127,20 +127,20 @@ int main(int argc, char* argv[]){
 
         // Expand into a uint32_t RGBA buffer
         for (int i = 0; i < 160*144; i++) {
-            gpu_frame[i] = dmg_palette[indexBuffer[i] & 3];
+            gpuFrame[i] = dmgPalette[indexBuffer[i] & 3];
         }
 
         // upload the 160×144×4 byte RGBA image
-        glBindTexture(GL_TEXTURE_2D, gb_tex);
+        glBindTexture(GL_TEXTURE_2D, gbTexture);
         glTexSubImage2D(GL_TEXTURE_2D, 0,
                         0, 0, 160, 144,
                         GL_RGBA, GL_UNSIGNED_BYTE,
-                        reinterpret_cast<const GLvoid*>(gpu_frame.data()));
+                        reinterpret_cast<const GLvoid*>(gpuFrame.data()));
         glBindTexture(GL_TEXTURE_2D, 0);
 
         // draw within ImGui
         ImGui::Begin("Game Boy Screen");
-        ImGui::Image((void*)(intptr_t)gb_tex,
+        ImGui::Image((void*)(intptr_t)gbTexture,
                      ImVec2(160 * 2.0f, 144 * 2.0f));
         ImGui::End();
 
@@ -162,7 +162,7 @@ int main(int argc, char* argv[]){
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
 
-    SDL_GL_DeleteContext(gl_context);
+    SDL_GL_DeleteContext(glContext);
     SDL_DestroyWindow(window);
     SDL_Quit();
 }
